@@ -37,7 +37,7 @@ export default function RadioPlayer({
   };
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
       {/* Play/Pause Button */}
       <button
         onClick={onTogglePlay}

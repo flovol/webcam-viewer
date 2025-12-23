@@ -35,12 +35,12 @@ export default function WeatherDisplay({ weather, locationName, currentTime }: W
   };
 
   return (
-    <div className="flex flex-col items-start">
-      <div className="text-white text-sm font-semibold mb-1">
+    <div className="flex flex-col items-start md:items-start w-full md:w-auto">
+      <div className="text-white text-xs md:text-sm font-semibold mb-1">
         {locationName}
       </div>
       {weather && (
-        <div className="flex items-center gap-3 text-white/90">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3 text-white/90">
           <div className="flex items-center gap-1.5">
             <span className="text-lg">{getWeatherIcon(weather.weatherCode)}</span>
             <span className="text-sm font-medium">{weather.temperature}°C</span>

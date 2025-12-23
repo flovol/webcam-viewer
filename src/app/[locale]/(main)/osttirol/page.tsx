@@ -376,24 +376,16 @@ export default function OsttirolPage() {
       <audio ref={audioRef} src={selectedStation.url} preload="none" />
 
       {/* Osttirol Logo - Rechte obere Ecke */}
-      <div className="absolute top-4 right-4 z-20 p-1">
+      <div className="absolute top-2 md:top-4 right-2 md:right-4 z-20 p-1">
         <Image
           src="/logo_osttirol_red.png"
           alt="Osttirol Logo"
           width={120}
           height={120}
-          className="drop-shadow-2xl"
+          className="w-16 h-16 md:w-[120px] md:h-[120px] drop-shadow-2xl object-contain"
           priority
         />
       </div>
-
-      {/* Einstellungen - Linke untere Ecke */}
-      <SettingsMenu
-        slideDuration={slideDuration}
-        viewMode={viewMode}
-        onSlideDurationChange={handleSlideDurationChange}
-        onViewModeChange={handleViewModeChange}
-      />
 
       {/* Uhr und Datum - Oben */}
       <div className="relative z-10">
@@ -421,22 +413,40 @@ export default function OsttirolPage() {
       </div>
 
       {/* Radio Player Controls - Unten Mittig */}
-      <div className="relative z-20 pb-6 pt-4">
+      <div className="relative z-20 pb-4 md:pb-6 pt-2 md:pt-4 px-2 md:px-0">
         <div className="flex justify-center">
-          <div className="flex items-center gap-4 px-8 py-4 bg-white/10 backdrop-blur-md rounded-full border border-white/20 transition-all duration-500 ease-in-out">
-            {/* Standort und Wetter - nur im Slideshow-Modus */}
-            {viewMode === 'slideshow' && (
-              <>
-                <WeatherDisplay
-                  weather={weather}
-                  locationName={cameraLocations[WEBCAM_URLS[currentIndex].locationId]?.name || 'Osttirol'}
-                  currentTime={currentTime}
-                />
+          {/* Media Bar */}
+          <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 px-4 md:px-8 py-3 md:py-4 bg-white/10 backdrop-blur-md rounded-2xl md:rounded-full border border-white/20 transition-all duration-500 ease-in-out w-full md:w-auto max-w-full">
+            {/* Erste Zeile Mobile: Settings + Wetter */}
+            <div className="flex flex-row items-center gap-3 md:gap-4 w-full md:w-auto">
+              {/* Settings Icon */}
+              <SettingsMenu
+                slideDuration={slideDuration}
+                viewMode={viewMode}
+                onSlideDurationChange={handleSlideDurationChange}
+                onViewModeChange={handleViewModeChange}
+              />
 
-                {/* Trennlinie */}
-                <div className="h-12 w-px bg-white/20"></div>
-              </>
-            )}
+              {/* Trennlinie nach Settings */}
+              <div className="h-10 md:h-12 w-px bg-white/20"></div>
+
+              {/* Wetter - nur im Slideshow-Modus */}
+              {viewMode === 'slideshow' && (
+                <>
+                  <WeatherDisplay
+                    weather={weather}
+                    locationName={cameraLocations[WEBCAM_URLS[currentIndex].locationId]?.name || 'Osttirol'}
+                    currentTime={currentTime}
+                  />
+
+                  {/* Trennlinie nach Wetter - nur Desktop */}
+                  <div className="hidden md:block h-12 w-px bg-white/20"></div>
+                </>
+              )}
+            </div>
+
+            {/* Trennlinie horizontal - nur Mobile zwischen Zeilen */}
+            <div className="md:hidden h-px w-full bg-white/20"></div>
 
             {/* Radio Player */}
             <RadioPlayer
