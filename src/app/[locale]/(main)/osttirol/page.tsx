@@ -102,11 +102,10 @@ const RADIO_STATIONS = [
   { id: 'oe3', name: 'Hitradio Ö3', url: 'https://orf-live.ors-shoutcast.at/oe3-q2a' },
   { id: 'fm4', name: 'FM4', url: 'https://orf-live.ors-shoutcast.at/fm4-q2a' },
   { id: 'osttirol', name: 'Radio Osttirol', url: 'https://live.antenne.at/ost' },
-  { id: 'life-tirol', name: 'Life Radio Tirol', url: 'https://stream.liferadio.at/liferadio-tirol/mp3-128' },
-  { id: 'kronehit', name: 'Kronehit', url: 'https://onair.krone.at/kronehit.mp3' },
-  { id: 'rockantenne', name: 'Rock Antenne', url: 'https://stream.rockantenne.de/rockantenne' },
+  { id: 'life-tirol', name: 'Life Radio Tirol', url: 'http://stream.liferadio.tirol/live/aac-256/SHQ' },
+  { id: 'kronehit', name: 'Kronehit', url: 'https://secureonair.krone.at/kronehit.mp3' },
+  { id: 'rockantenne', name: 'Rock Antenne', url: 'https://s1-webradio.rockantenne.de/rockantenne/stream/mp3' },
   { id: 'swr3', name: 'SWR3', url: 'https://liveradio.swr.de/sw282p3/swr3/play.mp3' },
-  { id: 'ultra-split', name: 'Ultra Split', url: 'https://live.ultra-split.com:8443/stream' },
   { id: 'antenne-bayern', name: 'Antenne Bayern', url: 'https://stream.antenne.de/antenne' },
 ];
 
@@ -228,30 +227,52 @@ export default function OsttirolPage() {
 
   // Fetch radio metadata
   useEffect(() => {
+    let retryCount = 0;
+    const maxRetries = 2;
+
     const fetchMetadata = async () => {
       try {
-        const response = await fetch('/api/radio-metadata');
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 15 Sekunden Client-Timeout
+
+        const response = await fetch(
+          `/api/radio-metadata?url=${encodeURIComponent(selectedStation.url)}&name=${encodeURIComponent(selectedStation.name)}`,
+          { signal: controller.signal }
+        );
+        clearTimeout(timeoutId);
+        
         const data = await response.json();
         console.log('📡 API Response:', data);
         
-        if (data.artist || (data.title && data.title !== 'Ö3 Livestream')) {
-          const newSong = { artist: data.artist || '', title: data.title || 'Ö3 Livestream' };
+        if (data.artist || (data.title && data.title !== `${selectedStation.name} Livestream`)) {
+          const newSong = { artist: data.artist || '', title: data.title || `${selectedStation.name} Livestream` };
           setCurrentSong(newSong);
           console.log('🎵 Aktueller Song:', data.artist ? `${data.artist} - ${data.title}` : data.title);
-        } else {
+          retryCount = 0; // Reset retry count bei Erfolg
+        } else if (!data.error) {
           console.log('⚠️ Keine Song-Info verfügbar, behalte letzten Song');
+        } else if (retryCount < maxRetries) {
+          retryCount++;
+          console.log(`🔄 Retry ${retryCount}/${maxRetries} wegen Fehler: ${data.error}`);
         }
       } catch (error) {
-        console.error('Error fetching metadata:', error);
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.error('⏱️ Metadata-Abruf abgebrochen (Timeout)');
+        } else {
+          console.error('❌ Error fetching metadata:', error);
+        }
+        if (retryCount < maxRetries) {
+          retryCount++;
+        }
       }
     };
 
     if (isPlaying) {
       fetchMetadata();
-      const interval = setInterval(fetchMetadata, 10000); // Alle 10 Sekunden aktualisieren
+      const interval = setInterval(fetchMetadata, 15000); // Alle 15 Sekunden
       return () => clearInterval(interval);
     }
-  }, [isPlaying]);
+  }, [isPlaying, selectedStation]);
 
   // Radio Player Toggle
   const toggleRadio = () => {
@@ -359,7 +380,7 @@ export default function OsttirolPage() {
         )}
         <div className="absolute inset-0 bg-black/20" />
         {/* Schneefall im Hintergrund - nur nach 19:00 Uhr */}
-        {(currentTime.getHours() >= 19 || currentTime.getHours() < 6) && (
+        {(currentTime.getHours() >= 17 || currentTime.getHours() < 6) && (
           <Snowfall
             color="#fff"
             snowflakeCount={1000}
@@ -375,8 +396,8 @@ export default function OsttirolPage() {
       {/* Audio Element für Radio */}
       <audio ref={audioRef} src={selectedStation.url} preload="none" />
 
-      {/* Osttirol Logo - Rechte obere Ecke */}
-      <div className="absolute top-2 md:top-4 right-2 md:right-4 z-20 p-1">
+      {/* Osttirol Logo - Rechte obere Ecke 
+      <div className="absolute top-1 md:top-1 right-1 md:right-1 p-1">
         <Image
           src="/logo_osttirol_red.png"
           alt="Osttirol Logo"
@@ -385,7 +406,7 @@ export default function OsttirolPage() {
           className="w-16 h-16 md:w-[120px] md:h-[120px] drop-shadow-2xl object-contain"
           priority
         />
-      </div>
+      </div>*/}
 
       {/* Uhr und Datum - Oben */}
       <div className="relative z-10">

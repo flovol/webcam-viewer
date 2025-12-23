@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import https from 'https';
+import http from 'http';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,22 +22,38 @@ function parseMetadata(metadataString: string): IcecastMetadata {
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   return new Promise((resolve) => {
-    const streamUrl = 'https://orf-live.ors-shoutcast.at/oe3-q2a';
+    const { searchParams } = new URL(request.url);
+    const streamUrl = searchParams.get('url') || 'https://orf-live.ors-shoutcast.at/oe3-q2a';
+    const stationName = searchParams.get('name') || 'Ö3';
+    
+    // Wähle http oder https basierend auf der URL
+    const protocol = streamUrl.startsWith('https') ? https : http;
     
     const options = {
       headers: {
         'Icy-MetaData': '1',
         'User-Agent': 'Mozilla/5.0'
-      }
+      },
+      timeout: 15000 // 15 Sekunden Verbindungs-Timeout
     };
 
-    const req = https.get(streamUrl, options, (res) => {
+    const timeoutId = setTimeout(() => {
+      req.destroy();
+      resolve(NextResponse.json({ 
+        error: 'Timeout',
+        title: `${stationName} Livestream`
+      }));
+    }, 15000);
+
+    const req = protocol.get(streamUrl, options, (res) => {
       const metaInt = parseInt(res.headers['icy-metaint'] as string || '0');
       
       if (!metaInt) {
+        clearTimeout(timeoutId);
+        req.destroy();
         resolve(NextResponse.json({ 
           error: 'No metadata available',
-          title: 'Ö3 Livestream'
+          title: `${stationName} Livestream`
         }));
         return;
       }
@@ -44,9 +61,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       let buffer = Buffer.alloc(0);
       let audioDataRead = 0;
       let metadataRead = false;
+      let emptyBlocks = 0;
+      let filledBlocks = 0;
+      const maxEmptyBlocks = 50; // Maximal 50 leere Blöcke
+      const maxFilledBlocks = 15; // Maximal 15 gefüllte Blöcke ohne Erfolg
 
       res.on('data', (chunk: Buffer) => {
         if (metadataRead) {
+          clearTimeout(timeoutId);
           req.destroy();
           return;
         }
@@ -71,7 +93,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           const metadataLength = buffer[0] * 16;
           buffer = buffer.slice(1);
 
-          if (metadataLength === 0) continue;
+          if (metadataLength === 0) {
+            // Leeres Metadaten-Block, weiter zum nächsten
+            emptyBlocks++;
+            if (emptyBlocks > maxEmptyBlocks) {
+              clearTimeout(timeoutId);
+              req.destroy();
+              resolve(NextResponse.json({ 
+                error: 'No metadata found after checking blocks',
+                title: `${stationName} Livestream`
+              }));
+              return;
+            }
+            continue;
+          }
 
           if (buffer.length < metadataLength) break;
 
@@ -86,12 +121,27 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             const artist = parts.length > 1 ? parts[0].trim() : '';
             const title = parts.length > 1 ? parts.slice(1).join(' - ').trim() : metadata.StreamTitle;
 
+            clearTimeout(timeoutId);
+            req.destroy();
             resolve(NextResponse.json({
               artist,
               title,
               fullTitle: metadata.StreamTitle
             }));
             metadataRead = true;
+            return;
+          }
+
+          // Block hatte Daten aber kein StreamTitle
+          filledBlocks++;
+          if (filledBlocks > maxFilledBlocks) {
+            clearTimeout(timeoutId);
+            req.destroy();
+            resolve(NextResponse.json({ 
+              error: 'No valid metadata found',
+              title: `${stationName} Livestream`
+            }));
+            return;
           }
 
           buffer = buffer.slice(metadataLength);
@@ -99,30 +149,41 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       });
 
       res.on('error', (error) => {
+        clearTimeout(timeoutId);
+        req.destroy();
         resolve(NextResponse.json({ 
           error: 'Stream error',
-          title: 'Ö3 Livestream',
+          title: `${stationName} Livestream`,
           details: error.message 
         }));
       });
 
-      // Timeout after 5 seconds
-      setTimeout(() => {
+      res.on('end', () => {
         if (!metadataRead) {
-          req.destroy();
+          clearTimeout(timeoutId);
           resolve(NextResponse.json({ 
-            error: 'Timeout',
-            title: 'Ö3 Livestream'
+            error: 'Stream ended without metadata',
+            title: `${stationName} Livestream`
           }));
         }
-      }, 5000);
+      });
     });
 
     req.on('error', (error) => {
+      clearTimeout(timeoutId);
       resolve(NextResponse.json({ 
         error: 'Connection error',
-        title: 'Ö3 Livestream',
+        title: `${stationName} Livestream`,
         details: error.message 
+      }));
+    });
+
+    req.on('timeout', () => {
+      clearTimeout(timeoutId);
+      req.destroy();
+      resolve(NextResponse.json({ 
+        error: 'Request timeout',
+        title: `${stationName} Livestream`
       }));
     });
   });
