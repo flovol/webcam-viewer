@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
+import Snowfall from "react-snowfall";
 import ClockDisplay from "@/components/ClockDisplay";
 import WeatherDisplay from "@/components/WeatherDisplay";
 import RadioPlayer from "@/components/RadioPlayer";
@@ -95,7 +96,7 @@ const WEBCAM_URLS = [
   { index: 40, url: "https://www.foto-webcam.eu/webcam/freiwandeck/current/1920.jpg", locationId: "freiwandeck" }
 ];
 
-const SLIDE_DURATION = 5000; // 20 Sekunden pro Bild
+const SLIDE_DURATION = 5000; // 5 Sekunden pro Bild
 
 const RADIO_STATIONS = [
   { id: 'oe3', name: 'Hitradio Ö3', url: 'https://orf-live.ors-shoutcast.at/oe3-q2a' },
@@ -306,7 +307,71 @@ export default function OsttirolPage() {
   };
 
   return (
-    <div className="fixed inset-0 bg-black flex flex-col ">
+    <div className="fixed inset-0 bg-black flex flex-col overflow-hidden">
+      {/* Blurry Hintergrund über gesamte Seite */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        {viewMode === 'slideshow' ? (
+          <>
+            {/* Vorheriges Bild */}
+            <Image
+              key={`bg-prev-${previousIndex}`}
+              src={WEBCAM_URLS[previousIndex].url}
+              alt="Background Previous"
+              fill
+              className={`object-cover blur-xl scale-110 transition-opacity duration-1000 ease-in-out ${isTransitioning ? 'opacity-100' : 'opacity-0'}`}
+              unoptimized
+              priority={false}
+            />
+            {/* Aktuelles Bild */}
+            <Image
+              key={`bg-${currentIndex}`}
+              src={WEBCAM_URLS[currentIndex].url}
+              alt="Background"
+              fill
+              className={`object-cover blur-xl scale-110 transition-opacity duration-1000 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
+              unoptimized
+              priority
+            />
+          </>
+        ) : (
+          <>
+            {/* Vorheriger Hintergrund */}
+            <Image
+              key={`bg-grid-prev-${previousGridCameras[0]?.url}`}
+              src={previousGridCameras[0]?.url || gridCameras[0]?.url}
+              alt="Background Previous"
+              fill
+              className={`object-cover blur-xl scale-110 transition-opacity duration-1000 ease-in-out ${isTransitioning ? 'opacity-100' : 'opacity-0'}`}
+              unoptimized
+              priority={false}
+            />
+            {/* Aktueller Hintergrund */}
+            <Image
+              key={`bg-grid-${gridCameras[0]?.url}`}
+              src={gridCameras[0]?.url || ''}
+              alt="Background"
+              fill
+              className={`object-cover blur-xl scale-110 transition-opacity duration-1000 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
+              unoptimized
+              priority
+            />
+          </>
+        )}
+        <div className="absolute inset-0 bg-black/20" />
+        {/* Schneefall im Hintergrund - nur nach 19:00 Uhr */}
+        {(currentTime.getHours() >= 19 || currentTime.getHours() < 6) && (
+          <Snowfall
+            color="#fff"
+            snowflakeCount={1000}
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+            }}
+          />
+        )}
+      </div>
+
       {/* Audio Element für Radio */}
       <audio ref={audioRef} src={selectedStation.url} preload="none" />
 
@@ -331,28 +396,32 @@ export default function OsttirolPage() {
       />
 
       {/* Uhr und Datum - Oben */}
-      <ClockDisplay currentTime={currentTime} />
+      <div className="relative z-10">
+        <ClockDisplay currentTime={currentTime} />
+      </div>
 
       {/* Webcam Ansicht - Slideshow oder Grid */}
-      {viewMode === 'slideshow' ? (
-        <WebcamSlideshow
-          currentUrl={WEBCAM_URLS[currentIndex].url}
-          previousUrl={WEBCAM_URLS[previousIndex].url}
-          currentIndex={currentIndex}
-          previousIndex={previousIndex}
-          isTransitioning={isTransitioning}
-        />
-      ) : (
-        <WebcamGrid
-          cameras={gridCameras}
-          previousCameras={previousGridCameras}
-          cameraLocations={cameraLocations}
-          isTransitioning={isTransitioning}
-        />
-      )}
+      <div className="flex-1 relative overflow-hidden">
+        {viewMode === 'slideshow' ? (
+          <WebcamSlideshow
+            currentUrl={WEBCAM_URLS[currentIndex].url}
+            previousUrl={WEBCAM_URLS[previousIndex].url}
+            currentIndex={currentIndex}
+            previousIndex={previousIndex}
+            isTransitioning={isTransitioning}
+          />
+        ) : (
+          <WebcamGrid
+            cameras={gridCameras}
+            previousCameras={previousGridCameras}
+            cameraLocations={cameraLocations}
+            isTransitioning={isTransitioning}
+          />
+        )}
+      </div>
 
       {/* Radio Player Controls - Unten Mittig */}
-      <div className="relative z-20 pb-6">
+      <div className="relative z-20 pb-6 pt-4">
         <div className="flex justify-center">
           <div className="flex items-center gap-4 px-8 py-4 bg-white/10 backdrop-blur-md rounded-full border border-white/20 transition-all duration-500 ease-in-out">
             {/* Standort und Wetter - nur im Slideshow-Modus */}

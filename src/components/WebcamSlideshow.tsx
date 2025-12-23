@@ -27,57 +27,18 @@ export default function WebcamSlideshow({
     return () => clearInterval(interval);
   }, []);
 
-  const showSnowfall = currentHour >= 19 || currentHour < 6;
-
   return (
     <>
-      {/* Blurry Hintergrund */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
-        {/* Vorheriges Bild */}
-        <Image
-          key={`bg-prev-${previousIndex}`}
-          src={previousUrl}
-          alt="Background Previous"
-          fill
-          className={`object-cover blur-xl scale-110 transition-opacity duration-1000 ease-in-out ${isTransitioning ? 'opacity-100' : 'opacity-0'}`}
-          unoptimized
-          priority={false}
-        />
-        {/* Aktuelles Bild */}
-        <Image
-          key={`bg-${currentIndex}`}
-          src={currentUrl}
-          alt="Background"
-          fill
-          className={`object-cover blur-xl scale-110 transition-opacity duration-1000 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
-          unoptimized
-          priority
-        />
-        <div className="absolute inset-0 bg-black/20" />
-        {/* Schneefall im Hintergrund - nur nach 19:00 Uhr */}
-        {showSnowfall && (
-          <Snowfall
-            color="#fff"
-            snowflakeCount={1000}
-            style={{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-            }}
-          />
-        )}
-      </div>
-
-      {/* Webcam Bild - Hauptbild */}
-      <div className="relative flex-1 p-4">
-        <div className="relative w-full h-full">
+      {/* Webcam Bild - Hauptbild im Original-Seitenverhältnis */}
+      <div className="relative w-full h-full flex items-center justify-center p-4">
+        <div className="relative w-[95%] h-[95%]">
           {/* Vorheriges Bild */}
           <Image
             key={`prev-${previousIndex}`}
             src={previousUrl}
             alt={`Webcam Previous`}
             fill
-            className={`object-contain transition-opacity duration-1000 ease-in-out ${isTransitioning ? 'opacity-100' : 'opacity-0'}`}
+            className={`object-contain rounded-lg transition-opacity duration-1000 ease-in-out ${isTransitioning ? 'opacity-100' : 'opacity-0'}`}
             unoptimized
             priority={false}
           />
@@ -87,7 +48,7 @@ export default function WebcamSlideshow({
             src={currentUrl}
             alt={`Webcam ${currentIndex + 1}`}
             fill
-            className={`object-contain transition-opacity duration-1000 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
+            className={`object-contain rounded-lg transition-opacity duration-1000 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
             priority
             unoptimized
           />

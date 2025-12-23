@@ -1,22 +1,32 @@
-# Next.js Internationalization Template
+# 🏔️ Osttirol Webcam Viewer
 
-A modern Next.js template with built-in internationalization (i18n) support, TypeScript, Tailwind CSS, and custom fonts.
+Ein modernes Next.js Dashboard für Live-Webcams aus Osttirol mit integrierten Wetterdaten, Radio-Player und Slideshow-Funktion.
 
-## Features
+## ✨ Features
 
-- ✨ **Next.js 16** - Latest version with App Router
-- 🌍 **Internationalization** - Multi-language support with next-intl
-- 🎨 **Tailwind CSS 4** - Utility-first CSS framework
-- 📝 **TypeScript** - Type-safe development
-- 🔤 **Custom Fonts** - HK Grotesk font family included
-- 🎯 **ESLint** - Code linting and formatting
-- 🔒 **Middleware** - Optional basic auth protection
+- 📷 **40+ Live Webcams** - HD-Webcams aus ganz Osttirol (St. Jakob, Defereggental, Lienz, Matrei, Kals, etc.)
+- 🎬 **Slideshow-Modus** - Automatischer Wechsel mit smooth Transitions
+- 🖼️ **Grid-Modus** - 4 Webcams gleichzeitig anzeigen
+- 🌡️ **Live Wetter** - Aktuelle Wetterdaten von Open-Meteo
+- 📻 **Radio Player** - Integrierter Streaming-Player (Ö3, FM4, Radio Osttirol, etc.)
+- ❄️ **Schneefall-Effekt** - Visuelle Effekte nach 19:00 Uhr
+- 🌍 **Mehrsprachig** - Deutsch, Englisch, Italienisch
+- 📱 **Responsive** - Optimiert für alle Bildschirmgrößen
+- ⚡ **Next.js 16** - App Router, Server Components
+- 🎨 **Tailwind CSS** - Modern und performant
+- 🔤 **HK Grotesk Font** - Professionelle Typografie
 
-## Supported Languages
+## 🗺️ Webcam-Standorte
 
-- English (en)
-- German (de)
-- Italian (it)
+- Defereggental (St. Veit, St. Jakob, Hopfgarten, Brunnalm, Weißspitz)
+- Lienz / Zettersfeld
+- Matrei in Osttirol
+- Kals am Großglockner
+- Virgen / Prägraten
+- Villgratental
+- Sillian / Hochpustertal
+- Kartitsch / Obertilliach
+- und viele mehr...
 
 ## Getting Started
 
@@ -38,6 +48,24 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Build
 
+## 🚀 Getting Started
+
+### Installation
+
+```bash
+npm install
+```
+
+### Development
+
+```bash
+npm run dev
+```
+
+Öffne [http://localhost:3000](http://localhost:3000) im Browser.
+
+### Build
+
 ```bash
 npm run build
 ```
@@ -48,84 +76,106 @@ npm run build
 npm run start
 ```
 
-## Project Structure
+## 🏗️ Projektstruktur
 
 ```
 src/
 ├── app/
-│   ├── [locale]/          # Localized routes
-│   │   ├── (auth)/        # Auth-related pages
-│   │   ├── (main)/        # Main app pages
-│   │   ├── layout.tsx     # Locale layout
-│   │   └── page.tsx       # Homepage
-│   ├── api/               # API routes
-│   ├── layout.tsx         # Root layout
-│   └── not-found.tsx      # 404 page
-├── components/            # Reusable components
-├── fonts/                 # Custom font files
-├── hooks/                 # Custom React hooks
-├── services/              # API services
-├── store/                 # State management
-├── types/                 # TypeScript types
-├── globals.css            # Global styles
-├── i18n.ts                # i18n configuration
-├── proxy.ts               # Middleware configuration
-└── routing.ts             # Route definitions
+│   ├── [locale]/
+│   │   └── (main)/
+│   │       └── osttirol/
+│   │           └── page.tsx      # Hauptseite mit Webcam-Viewer
+│   └── api/
+│       └── radio-metadata/       # Radio-Metadaten API
+├── components/
+│   ├── ClockDisplay.tsx          # Digitale Uhr
+│   ├── RadioPlayer.tsx           # Radio-Streaming
+│   ├── SettingsMenu.tsx          # Einstellungen (Dauer, Grid/Slideshow)
+│   ├── WeatherDisplay.tsx        # Wetter-Widget
+│   ├── WebcamGrid.tsx            # 4-Kamera Grid-Ansicht
+│   └── WebcamSlideshow.tsx       # Slideshow mit Blur-Hintergrund
+├── fonts/                        # HK Grotesk Font
+├── globals.css
+├── i18n.ts
+└── routing.ts
 ```
 
-## Configuration
+## ⚙️ Konfiguration
 
-### Adding New Languages
+### Webcam-URLs anpassen
 
-Edit [src/routing.ts](src/routing.ts):
+Die Webcam-URLs befinden sich in [src/app/[locale]/(main)/osttirol/page.tsx](src/app/[locale]/(main)/osttirol/page.tsx):
 
 ```typescript
-export const locales = ['en', 'de', 'it', 'fr'] as const; // Add 'fr'
-
-export const localeConfig = [
-  // ...existing locales
-  { code: 'fr', nativeName: 'FR', imgcode: 'FR' }
+const WEBCAM_URLS = [
+  { index: 1, url: "https://...", locationId: "stveit" },
+  // Weitere Webcams hinzufügen...
 ];
 ```
 
-### Adding New Routes
-
-Edit [src/routing.ts](src/routing.ts):
+### Radio-Sender konfigurieren
 
 ```typescript
-export const routes = {
-  home: '/',
-  // Add your routes here
-  about: '/about',
-  contact: '/contact'
-} as const;
+const RADIO_STATIONS = [
+  { id: 'oe3', name: 'Hitradio Ö3', url: 'https://...' },
+  // Weitere Sender hinzufügen...
+];
 ```
 
-### Basic Auth Protection (Optional)
+### Slideshow-Dauer
 
-Uncomment the basic auth code in [src/proxy.ts](src/proxy.ts) and set environment variables:
+Standard: 5 Sekunden pro Bild (anpassbar im Settings-Menü)
 
-```env
-BASIC_AUTH_USER=your_username
-BASIC_AUTH_PASS=your_password
-```
+## 🎨 Features im Detail
 
-## Customization
+### Slideshow-Modus
+- Zufällige Bildwechsel mit Crossfade-Transition
+- Blurred Background-Effekt
+- Smooth Animationen (1000ms)
 
-### Colors
+### Grid-Modus
+- 4 Webcams gleichzeitig
+- Synchroner Bildwechsel
+- Responsive 2x2 Layout
 
-Edit the color scheme in [src/globals.css](src/globals.css):
+### Wetter-Integration
+- Open-Meteo API
+- Standortbasierte Daten pro Webcam
+- Temperatur, Wind, Niederschlag, Schneefall
 
-```css
-:root {
-  --primary: 210 72% 42%;  /* Change to your primary color */
-  /* ...other colors */
-}
-```
+### Schneefall-Effekt
+- Aktiviert zwischen 19:00 - 06:00 Uhr
+- 1000 Schneeflocken
+- Läuft im Blur-Hintergrund
 
-### Fonts
+## 🌍 Unterstützte Sprachen
 
-Replace the HK Grotesk font files in `src/fonts/` with your preferred fonts, then update the font configuration in [src/app/[locale]/layout.tsx](src/app/[locale]/layout.tsx).
+- Deutsch (de)
+- Englisch (en)
+- Italienisch (it)
+
+Übersetzungen befinden sich in `messages/[locale].json`
+
+## 📦 Technologie-Stack
+
+- **Next.js 16** - React Framework
+- **TypeScript** - Type Safety
+- **Tailwind CSS** - Styling
+- **next-intl** - Internationalisierung
+- **react-snowfall** - Schneefall-Effekt
+- **Open-Meteo API** - Wetterdaten
+
+## 📝 License
+
+MIT
+
+## 🤝 Contributing
+
+Pull Requests sind willkommen! Für größere Änderungen bitte zuerst ein Issue öffnen.
+
+---
+
+Made with ❄️ in Osttirol
 
 ## Learn More
 
