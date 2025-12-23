@@ -19,7 +19,7 @@ function parseMetadata(metadataString: string): IcecastMetadata {
   return metadata;
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   return new Promise((resolve) => {
     const streamUrl = 'https://orf-live.ors-shoutcast.at/oe3-q2a';
     
