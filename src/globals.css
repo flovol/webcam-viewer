@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Primary color */
+    --primary: 210 72% 42%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Background & Foreground */
+    --background: 0 0% 95%;
+    /* #F2F2F2 - gray-lightest */
+    --foreground: 40 9% 22%;
+    /* #363636 - gray-darker */
+
+    /* Card */
+    --card: 0 0% 100%;
+    --card-foreground: 40 9% 22%;
+
+    /* Popover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 40 9% 22%;
+
+    /* Secondary */
+    --secondary: 0 0% 83%;
+    /* #D9D9D9 - gray-lighter */
+    --secondary-foreground: 40 9% 22%;
+
+    /* Muted */
+    --muted: 0 0% 95%;
+    /* #F2F2F2 */
+    --muted-foreground: 0 0% 55%;
+    /* #787878 - gray-dark */
+
+    /* Accent */
+    --accent: 0 0% 95%;
+    --accent-foreground: 40 9% 22%;
+
+    /* Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Border & Input */
+    --border: 0 0% 83%;
+    /* #D4D4D4 */
+    --input: 0 0% 83%;
+    --ring: 210 72% 42%;
+
+    /* Border radius */
+    --radius: 0.5rem;
+
+    /* Chart colors */
+    --chart-1: 210 72% 42%;
+    --chart-2: 0 0% 39%;
+    --chart-3: 0 0% 55%;
+    --chart-4: 0 0% 77%;
+    --chart-5: 0 0% 83%;
+  }
+
+  .dark {
+    --background: 40 9% 22%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 15%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 15%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 210 72% 42%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 24%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 0 0% 24%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 0 0% 24%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 95%;
+    --border: 0 0% 24%;
+    --input: 0 0% 24%;
+    --ring: 210 72% 42%;
+    --chart-1: 210 72% 42%;
+    --chart-2: 0 0% 65%;
+    --chart-3: 0 0% 45%;
+    --chart-4: 0 0% 30%;
+    --chart-5: 0 0% 20%;
+  }
+}
+
+@layer base {
+  body {
+    font-family: var(--font-hk-grotesk), sans-serif;
+  }
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari and Opera */
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.3s ease-out;
+}
