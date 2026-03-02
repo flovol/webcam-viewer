@@ -35,8 +35,10 @@ export default function WeatherDisplay({ weather, locationName, currentTime }: W
   };
 
   return (
-    <div className="flex flex-col items-start md:items-start w-full md:w-auto">
-      <div className="text-white text-xs md:text-sm font-semibold mb-1">
+    <div className="flex flex-col items-start md:items-start w-full">
+      <div className={`text-white font-semibold mb-1 transition-all whitespace-nowrap ${
+        locationName.length > 30 ? 'text-xs md:text-sm' : 'text-md md:text-md'
+      }`}>
         {locationName}
       </div>
       {weather && (

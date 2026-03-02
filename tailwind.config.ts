@@ -58,6 +58,15 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-hk-grotesk)", "sans-serif"],
       },
+      keyframes: {
+        marquee: {
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
+      },
+      animation: {
+        marquee: 'marquee 15s linear infinite',
+      },
     },
   },
   plugins: [],

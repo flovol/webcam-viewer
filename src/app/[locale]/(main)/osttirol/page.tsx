@@ -46,8 +46,8 @@ const cameraLocations: Record<string, { name: string; lat: number; lon: number }
   "kals-Gradonna": { name: "Großglockner Resort / Kals Gradonna", lat: 47.0220, lon: 12.6820 },
   "matrei-AdlerLounge": { name: "Großglockner Resort / Matrei - AdlerLounge", lat: 47.0100, lon: 12.5400 },
   "matrei-Bergstation": { name: "Großglockner Resort / Matrei - Bergstation", lat: 47.0120, lon: 12.5420 },
-  "bergstation-Gadein": { name: "Skizentrum Sillian Hochpustertal / Bergstation Gadein", lat: 46.7550, lon: 12.4200 },
-  "bergstation-Ausservillgraten": { name: "Skizentrum Sillian Hochpustertal / Bergstation Außervillgraten", lat: 46.8850, lon: 12.4350 },
+  "bergstation-Gadein": { name: "Skizentrum Sillian Hochpustertal / Gadein", lat: 46.7550, lon: 12.4200 },
+  "bergstation-Ausservillgraten": { name: "Skizentrum Sillian Hochpustertal/ Außervillgraten", lat: 46.8850, lon: 12.4350 },
   "6er-Sesselbahn": { name: "Skizentrum Sillian Hochpustertal / 6er Sesselbahn Berg", lat: 46.7570, lon: 12.4220 },
   "adlersruhe": { name: "Adlersruhe / Blick zum Großglockner", lat: 47.0833, lon: 12.7167 },
   "freiwandeck": { name: "Freiwandeck / Blick zum Großglockner", lat: 47.0700, lon: 12.7000 }
@@ -437,31 +437,35 @@ export default function OsttirolPage() {
       <div className="relative z-20 pb-4 md:pb-6 pt-2 md:pt-4 px-2 md:px-0">
         <div className="flex justify-center">
           {/* Media Bar */}
-          <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 px-4 md:px-8 py-3 md:py-4 bg-white/10 backdrop-blur-md rounded-2xl md:rounded-full border border-white/20 transition-all duration-500 ease-in-out w-full md:w-auto max-w-full">
+          <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 px-4 md:px-8 py-3 md:py-4 bg-white/10 backdrop-blur-md rounded-2xl md:rounded-full border border-white/20 transition-all duration-500 ease-in-out w-full md:w-auto max-w-[95%] md:max-w-none">
             {/* Erste Zeile Mobile: Settings + Wetter */}
             <div className="flex flex-row items-center gap-3 md:gap-4 w-full md:w-auto">
               {/* Settings Icon */}
-              <SettingsMenu
-                slideDuration={slideDuration}
-                viewMode={viewMode}
-                onSlideDurationChange={handleSlideDurationChange}
-                onViewModeChange={handleViewModeChange}
-              />
+              <div className="w-auto md:w-[48px] flex justify-center">
+                <SettingsMenu
+                  slideDuration={slideDuration}
+                  viewMode={viewMode}
+                  onSlideDurationChange={handleSlideDurationChange}
+                  onViewModeChange={handleViewModeChange}
+                />
+              </div>
 
               {/* Trennlinie nach Settings */}
-              <div className="h-10 md:h-12 w-px bg-white/20"></div>
+              <div className="h-10 md:h-12 w-px bg-white/20 flex-shrink-0"></div>
 
               {/* Wetter - nur im Slideshow-Modus */}
               {viewMode === 'slideshow' && (
                 <>
-                  <WeatherDisplay
-                    weather={weather}
-                    locationName={cameraLocations[WEBCAM_URLS[currentIndex].locationId]?.name || 'Osttirol'}
-                    currentTime={currentTime}
-                  />
+                  <div className="flex-1 md:w-[280px] md:flex-none">
+                    <WeatherDisplay
+                      weather={weather}
+                      locationName={cameraLocations[WEBCAM_URLS[currentIndex].locationId]?.name || 'Osttirol'}
+                      currentTime={currentTime}
+                    />
+                  </div>
 
                   {/* Trennlinie nach Wetter - nur Desktop */}
-                  <div className="hidden md:block h-12 w-px bg-white/20"></div>
+                  <div className="hidden md:block h-12 w-px bg-white/20 flex-shrink-0"></div>
                 </>
               )}
             </div>
@@ -470,17 +474,19 @@ export default function OsttirolPage() {
             <div className="md:hidden h-px w-full bg-white/20"></div>
 
             {/* Radio Player */}
-            <RadioPlayer
-              audioRef={audioRef}
-              isPlaying={isPlaying}
-              currentSong={currentSong}
-              volume={volume}
-              selectedStation={selectedStation}
-              stations={RADIO_STATIONS}
-              onTogglePlay={toggleRadio}
-              onVolumeChange={handleVolumeChange}
-              onStationChange={changeStation}
-            />
+            <div className="w-full md:w-[400px]">
+              <RadioPlayer
+                audioRef={audioRef}
+                isPlaying={isPlaying}
+                currentSong={currentSong}
+                volume={volume}
+                selectedStation={selectedStation}
+                stations={RADIO_STATIONS}
+                onTogglePlay={toggleRadio}
+                onVolumeChange={handleVolumeChange}
+                onStationChange={changeStation}
+              />
+            </div>
           </div>
         </div>
       </div>
