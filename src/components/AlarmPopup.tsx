@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Alarm } from "@/app/api/alarms/route";
 
 interface AlarmPopupProps {
@@ -15,15 +15,29 @@ const LEAVE_ANIMATION_MS = 400;
 export default function AlarmPopup({ alarm, durationMs, onDismiss }: AlarmPopupProps) {
   const [leaving, setLeaving] = useState(false);
 
+  // Über eine Ref, weil der Elternteil bei jedem Rendern eine neue Funktion
+  // hereinreicht - in den Abhängigkeiten würde sie die Standzeit jedes Mal von
+  // vorn beginnen lassen.
+  const dismissRef = useRef(onDismiss);
+  useEffect(() => {
+    dismissRef.current = onDismiss;
+  });
+
+  // Standzeit abwarten, dann wegblenden.
   useEffect(() => {
     const hide = setTimeout(() => setLeaving(true), durationMs);
-    const remove = setTimeout(onDismiss, durationMs + LEAVE_ANIMATION_MS);
+    return () => clearTimeout(hide);
+  }, [durationMs]);
 
-    return () => {
-      clearTimeout(hide);
-      clearTimeout(remove);
-    };
-  }, [durationMs, onDismiss]);
+  // Nach der Ausblendung ausbauen - egal ob die Zeit abgelaufen ist oder jemand
+  // auf das Kreuz geklickt hat. Sonst bliebe ein geschlossenes Popup unsichtbar
+  // stehen und besetzte weiter einen der drei Plätze.
+  useEffect(() => {
+    if (!leaving) return;
+
+    const remove = setTimeout(() => dismissRef.current(), LEAVE_ANIMATION_MS);
+    return () => clearTimeout(remove);
+  }, [leaving]);
 
   return (
     <div

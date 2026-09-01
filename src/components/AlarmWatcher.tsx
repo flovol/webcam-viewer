@@ -18,7 +18,12 @@ import { ALARM_DEMO_EVENT } from "@/lib/alarmDemo";
 // Die Route cached serverseitig ebenfalls 60 Sekunden - egal wie viele Anzeigen
 // laufen, die Quelle wird höchstens einmal pro Minute abgerufen.
 const POLL_INTERVAL = 60_000;
-const POPUP_DURATION_MS = 25_000;
+/**
+ * Standzeit eines Popups. Eine Minute - lang genug, dass es auch bemerkt wird,
+ * wenn gerade niemand vor dem Schirm steht. Wer nicht warten will, schließt es
+ * über das Kreuz.
+ */
+const POPUP_DURATION_MS = 60_000;
 // Mehr gleichzeitige Popups würden den Bildschirm zustellen.
 const MAX_POPUPS = 3;
 const MAX_NOTIFICATIONS_AT_ONCE = 3;
