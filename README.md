@@ -126,6 +126,35 @@ const RADIO_STATIONS = [
 
 Standard: 5 Sekunden pro Bild (anpassbar im Settings-Menü)
 
+### Nachrichten und Sprachausgabe
+
+Die drei Knöpfe unter *Nachricht an die Anzeige* im Cockpit blenden auf `/osttirol` eine Karte ein
+und sagen sie an. Texte und Zuordnung stehen in [src/lib/messages.ts](src/lib/messages.ts) - eine
+Zeile ergänzen genügt, der Knopf entsteht daraus.
+
+Vorgelesen wird bevorzugt aus einer **mitgelieferten Aufnahme** unter `public/sprache/`. Grund: die
+im Browser eingebauten Stimmen sind je nach Rechner unterschiedlich bis unbrauchbar - auf älteren
+Windows-Installationen klingen sie blechern und schleppend. Eine Datei klingt überall gleich und
+braucht kein Netz. Fehlt eine Aufnahme (bei den Alarmierungen ist der Text nicht vorhersagbar),
+greift die Browserstimme; deren Auswahl bevorzugt neuronale Stimmen ("Natural", "Online", Google)
+und straft die alten SAPI-Stimmen ab.
+
+**Neue Aufnahme erzeugen** mit [Piper](https://github.com/rhasspy/piper) - freie, lokal laufende
+Sprachsynthese, kein Konto und keine Kosten. Programm und das Stimmmodell
+`de_DE-thorsten-medium` (aus [rhasspy/piper-voices](https://huggingface.co/rhasspy/piper-voices))
+herunterladen, dann:
+
+```bash
+echo "Gehen wir einen Kaffee trinken?" | \
+  ./piper --model de_DE-thorsten-medium.onnx --output_file public/sprache/kaffee.wav
+```
+
+Die Datei anschließend in `COCKPIT_MESSAGES` beim passenden Eintrag als `audio` eintragen.
+
+> Eine **Promi-Stimme** ist bewusst nicht vorgesehen: die Stimme eines identifizierbaren Menschen
+> nachzubilden greift in dessen Persönlichkeitsrecht ein (§ 16 ABGB) und verstößt gegen die
+> Bedingungen der Anbieter.
+
 ### Jalousien & Licht (ONYX)
 
 Das Admin-Cockpit unter `/controls` steuert zusätzlich die Beschattung und die Lampen einer

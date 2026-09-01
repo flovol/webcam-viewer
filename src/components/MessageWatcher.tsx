@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MESSAGE_EVENT, messageEmoji, type MessageDetail } from "@/lib/messages";
-import { speak } from "@/lib/speech";
+import { MESSAGE_EVENT, messageAudio, messageEmoji, type MessageDetail } from "@/lib/messages";
+import { say } from "@/lib/speech";
 
 /**
  * Zeigt die Kurznachrichten aus dem Cockpit auf der Anzeige.
@@ -50,7 +50,14 @@ export default function MessageWatcher() {
     if (!text) return;
 
     const timer = setTimeout(
-      () => setMessage({ text, emoji: messageEmoji(text), key: Date.now(), leaving: false }),
+      () =>
+        setMessage({
+          text,
+          emoji: messageEmoji(text),
+          audio: messageAudio(text),
+          key: Date.now(),
+          leaving: false,
+        }),
       800
     );
 
@@ -59,6 +66,7 @@ export default function MessageWatcher() {
 
   const key = message?.key;
   const text = message?.text;
+  const audio = message?.audio;
   const leaving = message?.leaving ?? false;
 
   // Vorlesen, sobald eine Nachricht erscheint - egal ob sie aus dem Cockpit
@@ -66,8 +74,8 @@ export default function MessageWatcher() {
   useEffect(() => {
     if (key === undefined || leaving || !text) return;
 
-    speak(text);
-  }, [key, leaving, text]);
+    say(text, audio);
+  }, [key, leaving, text, audio]);
 
   // Standzeit abwarten, dann wegblenden.
   useEffect(() => {
