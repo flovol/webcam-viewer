@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MESSAGE_EVENT, messageAudio, messageEmoji, type MessageDetail } from "@/lib/messages";
 import { say } from "@/lib/speech";
 
@@ -26,13 +26,25 @@ interface ShownMessage extends MessageDetail {
   leaving: boolean;
 }
 
-export default function MessageWatcher() {
+interface MessageWatcherProps {
+  /** Waehrend der Nachtruhe bleibt alles aus - kein Einblenden, keine Ansage. */
+  nightMode: boolean;
+}
+
+export default function MessageWatcher({ nightMode }: MessageWatcherProps) {
   const [message, setMessage] = useState<ShownMessage | null>(null);
+
+  // Ueber eine Ref, damit der Umschaltvorgang nicht den Ereignisempfaenger
+  // neu aufsetzt.
+  const nightRef = useRef(nightMode);
+  useEffect(() => {
+    nightRef.current = nightMode;
+  });
 
   useEffect(() => {
     const show = (event: Event) => {
       const detail = (event as CustomEvent<MessageDetail>).detail;
-      if (!detail?.text) return;
+      if (!detail?.text || nightRef.current) return;
 
       // Eine neue Nachricht ersetzt die vorherige, statt sich daneben zu
       // stellen - zwei gleichzeitige Zurufe gibt es im Alltag nicht.
@@ -47,7 +59,7 @@ export default function MessageWatcher() {
   // Probe-Alarm. Praktisch zum Ansehen, ohne das Cockpit zu bemühen.
   useEffect(() => {
     const text = new URLSearchParams(window.location.search).get("nachricht");
-    if (!text) return;
+    if (!text || nightRef.current) return;
 
     const timer = setTimeout(
       () =>

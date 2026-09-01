@@ -13,6 +13,7 @@ import WebcamGrid from "@/components/WebcamGrid";
 import WebcamFlightCard from "@/components/WebcamFlightCard";
 import AlarmWatcher from "@/components/AlarmWatcher";
 import MessageWatcher from "@/components/MessageWatcher";
+import NightOverlay from "@/components/NightOverlay";
 import { useRemoteControl } from "@/hooks/useRemoteControl";
 import { triggerAlarmDemo } from "@/lib/alarmDemo";
 import { messageAudio, messageEmoji, triggerMessage } from "@/lib/messages";
@@ -58,6 +59,9 @@ export default function OsttirolPage() {
   // Position in FLIGHT_ROUTE; previousStep = -1 heißt "noch kein Flug geflogen".
   const [flight, setFlight] = useState({ step: 0, previousStep: -1 });
   const [flightPhase, setFlightPhase] = useState<'flying' | 'arrived'>('arrived');
+  // Nachtruhe - schwarzer Schirm, keine neuen Webcambilder. Wird ueber das
+  // Cockpit ein- und ausgeschaltet (Feierabend / Guten Morgen).
+  const [nightMode, setNightMode] = useState(false);
   // Von /controls aus schaltbar - hält Diashow und Flug an.
   const [paused, setPaused] = useState(false);
   const [gridCameras, setGridCameras] = useState(() => {
@@ -73,7 +77,7 @@ export default function OsttirolPage() {
 
   // Diashow - rotiere zufällig durch die Bilder (nur im Slideshow-Modus)
   useEffect(() => {
-    if (viewMode !== 'slideshow' || paused) return;
+    if (viewMode !== 'slideshow' || paused || nightMode) return;
 
     const interval = setInterval(() => {
       setPreviousIndex(currentIndex);
@@ -93,11 +97,11 @@ export default function OsttirolPage() {
     }, slideDuration);
 
     return () => clearInterval(interval);
-  }, [currentIndex, slideDuration, viewMode, paused]);
+  }, [currentIndex, slideDuration, viewMode, paused, nightMode]);
 
   // Grid-Diashow - wechsle alle 4 Kameras gleichzeitig mit smooth transition
   useEffect(() => {
-    if (viewMode !== 'grid') return;
+    if (viewMode !== 'grid' || nightMode) return;
 
     const interval = setInterval(() => {
       setPreviousGridCameras(gridCameras);
@@ -112,7 +116,7 @@ export default function OsttirolPage() {
     }, slideDuration);
 
     return () => clearInterval(interval);
-  }, [viewMode, slideDuration, gridCameras]);
+  }, [viewMode, slideDuration, gridCameras, nightMode]);
 
   const flightTarget = FLIGHT_STOPS[FLIGHT_ROUTE[flight.step]];
   const flightOrigin =
@@ -137,7 +141,7 @@ export default function OsttirolPage() {
 
   // Nach der Landung stehenbleiben, dann zur nächsten Station.
   useEffect(() => {
-    if (viewMode !== 'flight' || flightPhase !== 'arrived' || paused) return;
+    if (viewMode !== 'flight' || flightPhase !== 'arrived' || paused || nightMode) return;
 
     const departure = setTimeout(
       () => setFlight((current) => ({
@@ -148,7 +152,7 @@ export default function OsttirolPage() {
     );
 
     return () => clearTimeout(departure);
-  }, [viewMode, flightPhase, slideDuration, paused]);
+  }, [viewMode, flightPhase, slideDuration, paused, nightMode]);
 
   // Wetter und Standortname hängen an currentIndex - im Flug mitziehen.
   useEffect(() => {
@@ -283,6 +287,7 @@ export default function OsttirolPage() {
     onViewMode: (mode) => setViewMode(mode),
     onSlideDuration: (durationMs) => setSlideDuration(durationMs),
     onPaused: (value) => setPaused(value),
+    onNightMode: (active) => setNightMode(active),
     onJump: jumpToCamera,
     onStep: stepCamera,
     onAlarmDemo: triggerAlarmDemo,
@@ -460,10 +465,13 @@ export default function OsttirolPage() {
       </div>
 
       {/* Meldet sich nur, wenn ein Einsatz dazukommt */}
-      <AlarmWatcher />
+      <AlarmWatcher nightMode={nightMode} />
 
       {/* Kurznachrichten aus dem Cockpit */}
-      <MessageWatcher />
+      <MessageWatcher nightMode={nightMode} />
+
+      {/* Nachtruhe - schwarz und still bis zum naechsten Morgen */}
+      {nightMode && <NightOverlay />}
 
       {/* Webcam Ansicht - Slideshow oder Grid */}
       <div className="flex-1 relative overflow-hidden">

@@ -78,8 +78,14 @@ export default function ControlsPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Chip tone={state.paused ? "warn" : "ok"}>
-              {state.paused ? "Pausiert" : state.viewMode === "flight" ? "3D-Flug" : "Diashow"}
+            <Chip tone={state.nightMode ? "neutral" : state.paused ? "warn" : "ok"}>
+              {state.nightMode
+                ? "Nachtruhe"
+                : state.paused
+                  ? "Pausiert"
+                  : state.viewMode === "flight"
+                    ? "3D-Flug"
+                    : "Diashow"}
             </Chip>
             <Chip tone={state.radio.playing ? "ok" : "neutral"}>
               {state.radio.playing ? (currentStation?.name ?? "Radio läuft") : "Radio aus"}
@@ -106,8 +112,32 @@ export default function ControlsPage() {
         {/* items-start: sonst streckt das Raster alle drei Flaechen auf die Hoehe
             der Kameraliste und unter den kuerzeren steht eine tote Flaeche. */}
         <div className="grid items-start gap-4 lg:grid-cols-2 xl:grid-cols-3">
-          <Panel title="Anzeige">
+          <Panel title="Anzeige" meta={state.nightMode ? "Nachtruhe" : undefined}>
             <div className="space-y-3">
+              {/* Die zwei Knoepfe des Tages: einer beim Kommen, einer beim Gehen.
+                  Feierabend nimmt das Radio gleich mit - nachts soll nichts
+                  laufen, auch nichts Hoerbares. */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  disabled={busy}
+                  onClick={() => send({ nightMode: false })}
+                  className={BUTTON + " " + (state.nightMode ? INACTIVE : ACTIVE) + " py-3"}
+                >
+                  Guten Morgen
+                </button>
+                <button
+                  disabled={busy}
+                  onClick={() =>
+                    send({ nightMode: true, radio: { ...state.radio, playing: false } })
+                  }
+                  className={BUTTON + " " + (state.nightMode ? ACTIVE : INACTIVE) + " py-3"}
+                >
+                  Feierabend
+                </button>
+              </div>
+
+              <Divider label="Ansicht" />
+
               <div className="grid grid-cols-2 gap-2">
                 {(["slideshow", "flight"] as const).map((mode) => (
                   <button

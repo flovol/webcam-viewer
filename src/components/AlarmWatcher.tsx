@@ -125,11 +125,22 @@ function notify(alarms: Alarm[]): void {
   }
 }
 
-export default function AlarmWatcher() {
+interface AlarmWatcherProps {
+  /** Waehrend der Nachtruhe bleibt es still - siehe Kommentar in load(). */
+  nightMode: boolean;
+}
+
+export default function AlarmWatcher({ nightMode }: AlarmWatcherProps) {
   const [popups, setPopups] = useState<{ key: string; alarm: Alarm }[]>([]);
   // Zählt hoch, damit der Lichtschein bei jedem neuen Einsatz neu anläuft.
   const [flash, setFlash] = useState(0);
   const seenRef = useRef<Set<string> | null>(null);
+
+  // Ueber eine Ref, damit das Umschalten den Abruf nicht neu startet.
+  const nightRef = useRef(nightMode);
+  useEffect(() => {
+    nightRef.current = nightMode;
+  });
 
   const dismissPopup = useCallback((key: string) => {
     setPopups((current) => current.filter((entry) => entry.key !== key));
@@ -137,6 +148,8 @@ export default function AlarmWatcher() {
 
   // Probe-Popup: zeigt einmal, wie eine Alarmierung aussieht und klingt.
   const showDemo = useCallback(() => {
+    if (nightRef.current) return;
+
     const alarm: Alarm = {
       type: "Brand im Freien",
       location: "9971 Matrei in Osttirol",
@@ -202,6 +215,12 @@ export default function AlarmWatcher() {
         persistSeen(seen);
 
         if (seeding || fresh.length === 0) return;
+
+        // Nachtruhe: die Einsaetze sind oben schon als bekannt vermerkt, es
+        // bleibt still. Wuerde man sie stattdessen aufsparen, gaebe es beim
+        // Druck auf "Guten Morgen" eine Salve Sirenen fuer Ereignisse, die
+        // laengst vorbei sind.
+        if (nightRef.current) return;
 
         notify(fresh);
         playAlarmSound();

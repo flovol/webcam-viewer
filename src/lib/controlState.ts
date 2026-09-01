@@ -13,6 +13,11 @@ export interface ControlState {
   /** Steigt bei jeder Änderung - die Anzeige erkennt daran neue Befehle. */
   revision: number;
   viewMode: "slideshow" | "flight";
+  /**
+   * Nachtruhe: die Anzeige wird schwarz und hört auf, Webcambilder zu laden.
+   * Alarmierungen und Nachrichten kommen weiterhin durch.
+   */
+  nightMode: boolean;
   slideDurationMs: number;
   paused: boolean;
   radio: {
@@ -36,6 +41,7 @@ export const DEFAULT_CONTROL_STATE: ControlState = {
   viewMode: "slideshow",
   slideDurationMs: 5000,
   paused: false,
+  nightMode: false,
   radio: { stationId: null, playing: false, volume: 0.7 },
   jump: null,
   message: null,

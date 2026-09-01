@@ -11,6 +11,7 @@ export interface RemoteControlHandlers {
   onViewMode: (mode: string) => void;
   onSlideDuration: (durationMs: number) => void;
   onPaused: (paused: boolean) => void;
+  onNightMode: (active: boolean) => void;
   onJump: (index: number) => void;
   onStep: (direction: 1 | -1) => void;
   onMessage: (text: string) => void;
@@ -68,6 +69,7 @@ export function useRemoteControl(handlers: RemoteControlHandlers): void {
           on.onSlideDuration(state.slideDurationMs);
         }
         if (state.paused !== previous.paused) on.onPaused(state.paused);
+        if (state.nightMode !== previous.nightMode) on.onNightMode(state.nightMode);
 
         if (
           state.radio.stationId !== previous.radio.stationId ||
