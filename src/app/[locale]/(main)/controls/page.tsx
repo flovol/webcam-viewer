@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ACTIVE, BUTTON, Chip, Divider, INACTIVE, Panel } from "@/components/CockpitUi";
 import OnyxControls from "@/components/OnyxControls";
+import { COCKPIT_MESSAGES } from "@/lib/messages";
 import { cameraLocations, RADIO_STATIONS, WEBCAM_URLS } from "@/lib/webcams";
 import type { ControlState } from "@/lib/controlState";
 
@@ -162,6 +163,29 @@ export default function ControlsPage() {
                 >
                   Vor
                 </button>
+              </div>
+
+              <Divider label="Nachricht an die Anzeige" />
+
+              <div className="space-y-2">
+                {COCKPIT_MESSAGES.map((message) => (
+                  <button
+                    key={message.id}
+                    disabled={busy}
+                    onClick={() =>
+                      send({
+                        message: {
+                          text: message.text,
+                          nonce: (state.message?.nonce ?? 0) + 1,
+                        },
+                      })
+                    }
+                    className={`${BUTTON} ${INACTIVE} flex w-full items-center gap-2.5 text-left`}
+                  >
+                    <span aria-hidden="true">{message.emoji}</span>
+                    <span className="min-w-0 truncate">{message.text}</span>
+                  </button>
+                ))}
               </div>
 
               <Divider label="Test" />

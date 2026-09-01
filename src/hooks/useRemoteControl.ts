@@ -13,6 +13,7 @@ export interface RemoteControlHandlers {
   onPaused: (paused: boolean) => void;
   onJump: (index: number) => void;
   onStep: (direction: 1 | -1) => void;
+  onMessage: (text: string) => void;
   onRadio: (radio: ControlState["radio"]) => void;
   onAlarmDemo: () => void;
 }
@@ -24,7 +25,7 @@ export interface RemoteControlHandlers {
  * nie zurück. Sonst würden sich Steuerung und Anzeige gegenseitig überschreiben.
  *
  * Dauerzustände (Modus, Tempo, Radio) werden bei jeder Änderung der Revision
- * angewandt, Einmalbefehle (Sprung, Schritt, Alarm-Demo) nur wenn ihr Zähler
+ * angewandt, Einmalbefehle (Sprung, Schritt, Nachricht, Alarm-Demo) nur wenn ihr Zähler
  * gestiegen ist.
  */
 export function useRemoteControl(handlers: RemoteControlHandlers): void {
@@ -78,6 +79,10 @@ export function useRemoteControl(handlers: RemoteControlHandlers): void {
 
         if (state.jump && state.jump.nonce !== previous.jump?.nonce) {
           on.onJump(state.jump.index);
+        }
+
+        if (state.message && state.message.nonce !== previous.message?.nonce) {
+          on.onMessage(state.message.text);
         }
 
         if (state.stepNonce !== previous.stepNonce) on.onStep(state.stepDirection);

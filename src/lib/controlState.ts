@@ -22,6 +22,8 @@ export interface ControlState {
   };
   /** Einmalbefehl: Sprung zu einer Kamera. Der Zähler macht Wiederholungen wirksam. */
   jump: { index: number; nonce: number } | null;
+  /** Einmalbefehl: Kurznachricht auf der Anzeige. Der Zähler macht Wiederholungen wirksam. */
+  message: { text: string; nonce: number } | null;
   /** Einmalbefehle: Zähler hochzählen löst aus. */
   stepNonce: number;
   stepDirection: 1 | -1;
@@ -36,6 +38,7 @@ export const DEFAULT_CONTROL_STATE: ControlState = {
   paused: false,
   radio: { stationId: null, playing: false, volume: 0.7 },
   jump: null,
+  message: null,
   stepNonce: 0,
   stepDirection: 1,
   alarmDemoNonce: 0,

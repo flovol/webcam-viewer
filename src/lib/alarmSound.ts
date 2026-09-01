@@ -39,12 +39,22 @@ export function isAlarmSoundReady(): boolean {
   return context !== null && context.state === "running";
 }
 
+const TONE_LENGTH = 0.34;
+const PATTERN = [440, 588, 440, 588];
+
+/**
+ * Wie lange das Signal dauert.
+ *
+ * Wird gebraucht, um eine gesprochene Ansage danach anzusetzen statt darüber -
+ * gleichzeitig versteht man weder das eine noch das andere.
+ */
+export const ALARM_SOUND_DURATION_MS = Math.round(TONE_LENGTH * PATTERN.length * 1000);
+
 /** Vier abwechselnde Töne, angelehnt an ein Signalhorn. */
 export function playAlarmSound(volume = 0.25): void {
   if (!context || context.state !== "running") return;
 
-  const TONE_LENGTH = 0.34;
-  const pattern = [440, 588, 440, 588];
+  const pattern = PATTERN;
 
   pattern.forEach((frequency, index) => {
     const start = context!.currentTime + index * TONE_LENGTH;

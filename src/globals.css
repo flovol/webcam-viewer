@@ -215,6 +215,26 @@
   to   { opacity: 0; transform: translateX(130%) scale(0.9); }
 }
 
+/* Kurznachricht aus dem Cockpit - steigt von unten auf, ohne Blaulicht-Getue */
+.message-popup {
+  animation: messageRise 0.5s cubic-bezier(0.16, 1.2, 0.3, 1);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+}
+
+.message-popup--leaving {
+  animation: messageSink 0.4s ease-in forwards;
+}
+
+@keyframes messageRise {
+  0%   { opacity: 0; transform: translateY(60%) scale(0.92); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes messageSink {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(40%) scale(0.95); }
+}
+
 /* Der Rahmen atmet im Takt der Lampen mit */
 @keyframes alarmGlow {
   0%, 100% { box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 22px rgba(59, 130, 246, 0.35); }
@@ -327,4 +347,5 @@
   .kennleuchte__dome { filter: brightness(1.4); }
   .alarm-raumlicht { display: none; }
   .alarm-popup { animation: alarmSlideIn 0.01ms; }
+  .message-popup { animation: none; }
 }

@@ -12,8 +12,10 @@ import WebcamSlideshow from "@/components/WebcamSlideshow";
 import WebcamGrid from "@/components/WebcamGrid";
 import WebcamFlightCard from "@/components/WebcamFlightCard";
 import AlarmWatcher from "@/components/AlarmWatcher";
+import MessageWatcher from "@/components/MessageWatcher";
 import { useRemoteControl } from "@/hooks/useRemoteControl";
 import { triggerAlarmDemo } from "@/lib/alarmDemo";
+import { messageEmoji, triggerMessage } from "@/lib/messages";
 import { buildFlightRoute, distanceKm } from "@/lib/geo";
 
 // MapLibre greift auf window zu und darf deshalb nicht serverseitig gerendert werden.
@@ -284,6 +286,7 @@ export default function OsttirolPage() {
     onJump: jumpToCamera,
     onStep: stepCamera,
     onAlarmDemo: triggerAlarmDemo,
+    onMessage: (text) => triggerMessage({ text, emoji: messageEmoji(text) }),
     onRadio: ({ stationId, playing, volume }) => {
       const station = RADIO_STATIONS.find((entry) => entry.id === stationId);
       if (station && station.id !== selectedStation.id) {
@@ -457,6 +460,9 @@ export default function OsttirolPage() {
 
       {/* Meldet sich nur, wenn ein Einsatz dazukommt */}
       <AlarmWatcher />
+
+      {/* Kurznachrichten aus dem Cockpit */}
+      <MessageWatcher />
 
       {/* Webcam Ansicht - Slideshow oder Grid */}
       <div className="flex-1 relative overflow-hidden">

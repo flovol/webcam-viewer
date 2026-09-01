@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Alarm } from "@/app/api/alarms/route";
 import AlarmPopup from "./AlarmPopup";
-import { playAlarmSound } from "@/lib/alarmSound";
+import { ALARM_SOUND_DURATION_MS, playAlarmSound } from "@/lib/alarmSound";
+import { speak } from "@/lib/speech";
 import { ALARM_DEMO_EVENT } from "@/lib/alarmDemo";
 
 /**
@@ -64,6 +65,46 @@ function persistSeen(seen: Set<string>): void {
   }
 }
 
+/**
+ * Macht aus dem Feed-Text etwas Sprechbares.
+ *
+ * "FW Matrei/Osttirol" liest eine Sprachausgabe sonst als "F W Matrei
+ * Schrägstrich Osttirol" vor.
+ */
+function speakable(value: string): string {
+  return value
+    .replace(/\bFF\b/g, "Freiwillige Feuerwehr")
+    .replace(/\bFW\b/g, "Feuerwehr")
+    .replace(/\//g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function announcementFor(alarms: Alarm[]): string {
+  if (alarms.length === 1) {
+    const [alarm] = alarms;
+    return `Neue Alarmierung. ${speakable(alarm.type)}. ${speakable(alarm.place)}. ${speakable(alarm.brigade)}.`;
+  }
+
+  // Bei vielen gleichzeitig nur die Zahl - eine Vorleseschleife über ein Dutzend
+  // Einsätze hört sich niemand an.
+  if (alarms.length > MAX_NOTIFICATIONS_AT_ONCE) {
+    return `${alarms.length} neue Einsätze in Osttirol.`;
+  }
+
+  const einzeln = alarms
+    .map((alarm) => `${speakable(alarm.type)}, ${speakable(alarm.place)}.`)
+    .join(" ");
+
+  return `${alarms.length} neue Alarmierungen. ${einzeln}`;
+}
+
+/** Sagt die Einsätze an, sobald das Signalhorn ausgeklungen ist. */
+function announce(alarms: Alarm[]): void {
+  const text = announcementFor(alarms);
+  window.setTimeout(() => speak(text), ALARM_SOUND_DURATION_MS);
+}
+
 function notify(alarms: Alarm[]): void {
   if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
 
@@ -96,25 +137,25 @@ export default function AlarmWatcher() {
 
   // Probe-Popup: zeigt einmal, wie eine Alarmierung aussieht und klingt.
   const showDemo = useCallback(() => {
+    const alarm: Alarm = {
+      type: "Brand im Freien",
+      location: "9971 Matrei in Osttirol",
+      postalCode: "9971",
+      place: "Matrei in Osttirol",
+      brigade: "FW Matrei/Osttirol",
+      date: new Date().toLocaleDateString("de-AT"),
+    };
+
     setPopups((existing) =>
       [
         ...existing,
-        {
-          // Zähler im Schlüssel, damit mehrfaches Auslösen jedes Mal wirkt.
-          key: `demo-${Date.now()}`,
-          alarm: {
-            type: "Brand im Freien",
-            location: "9971 Matrei in Osttirol",
-            postalCode: "9971",
-            place: "Matrei in Osttirol",
-            brigade: "FW Matrei/Osttirol",
-            date: new Date().toLocaleDateString("de-AT"),
-          },
-        },
+        // Zähler im Schlüssel, damit mehrfaches Auslösen jedes Mal wirkt.
+        { key: `demo-${Date.now()}`, alarm },
       ].slice(-MAX_POPUPS)
     );
 
     playAlarmSound();
+    announce([alarm]);
     setFlash((count) => count + 1);
   }, []);
 
@@ -164,6 +205,7 @@ export default function AlarmWatcher() {
 
         notify(fresh);
         playAlarmSound();
+        announce(fresh);
         setFlash((count) => count + 1);
 
         setPopups((existing) =>
