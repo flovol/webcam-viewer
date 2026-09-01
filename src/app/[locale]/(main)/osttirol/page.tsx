@@ -11,6 +11,7 @@ import SettingsMenu from "@/components/SettingsMenu";
 import WebcamSlideshow from "@/components/WebcamSlideshow";
 import WebcamGrid from "@/components/WebcamGrid";
 import WebcamFlightCard from "@/components/WebcamFlightCard";
+import AlarmWatcher from "@/components/AlarmWatcher";
 import { buildFlightRoute, distanceKm } from "@/lib/geo";
 
 // MapLibre greift auf window zu und darf deshalb nicht serverseitig gerendert werden.
@@ -500,6 +501,9 @@ export default function OsttirolPage() {
       <div className="relative z-10">
         <ClockDisplay currentTime={currentTime} />
       </div>
+
+      {/* Meldet sich nur, wenn ein Einsatz dazukommt */}
+      <AlarmWatcher />
 
       {/* Webcam Ansicht - Slideshow oder Grid */}
       <div className="flex-1 relative overflow-hidden">

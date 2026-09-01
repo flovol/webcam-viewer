@@ -1,4 +1,5 @@
 import { useState } from "react";
+import AlarmAlertsSetting from "./AlarmAlertsSetting";
 
 interface SettingsMenuProps {
   slideDuration: number;
@@ -49,6 +50,9 @@ export default function SettingsMenu({ slideDuration, viewMode, onSlideDurationC
                 </select>
               </div>
               
+              {/* Feuerwehr-Alarmierungen: Ton und Systemmeldung freischalten */}
+              <AlarmAlertsSetting />
+
               {/* Platzhalter für Theme */}
               
             </div>
