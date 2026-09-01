@@ -44,9 +44,28 @@ export const DEFAULT_CONTROL_STATE: ControlState = {
 
 const KEY = "osttirol:controls";
 
+/**
+ * Zugangsdaten für den Redis-Speicher.
+ *
+ * Die Variablennamen hängen davon ab, wie der Speicher angelegt wurde:
+ * die Upstash-Integration im Vercel-Marketplace setzt je nach Produkt
+ * UPSTASH_KV_REST_API_* oder UPSTASH_REDIS_REST_*, ältere Projekte aus der Zeit
+ * von "Vercel KV" haben KV_REST_API_*. Alle drei werden akzeptiert, damit es
+ * nicht am Namen scheitert.
+ *
+ * Nicht verwendet wird UPSTASH_KV_REST_API_READ_ONLY_TOKEN - die Steuerung muss
+ * schreiben können.
+ */
 function kvConfig(): { url: string; token: string } | null {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
+  const url =
+    process.env.UPSTASH_KV_REST_API_URL ??
+    process.env.KV_REST_API_URL ??
+    process.env.UPSTASH_REDIS_REST_URL;
+
+  const token =
+    process.env.UPSTASH_KV_REST_API_TOKEN ??
+    process.env.KV_REST_API_TOKEN ??
+    process.env.UPSTASH_REDIS_REST_TOKEN;
 
   return url && token ? { url, token } : null;
 }
