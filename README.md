@@ -126,6 +126,76 @@ const RADIO_STATIONS = [
 
 Standard: 5 Sekunden pro Bild (anpassbar im Settings-Menü)
 
+### Jalousien & Licht (ONYX)
+
+Das Admin-Cockpit unter `/controls` steuert zusätzlich die Beschattung und die Lampen einer
+ONYX-Anlage von HELLA ([API-Doku](https://github.com/hella-info/onyx_api)). Ohne hinterlegte
+Zugangsdaten blendet der Bereich nur einen Hinweis ein, der Rest der Steuerung läuft normal weiter.
+
+**Zugangsdaten holen:** In der ONYX-App unter _Einstellungen/Zugriffsverwaltung_ einen temporären
+Code erzeugen (15 Minuten gültig) und gegen Fingerabdruck und Token tauschen:
+
+```bash
+curl -X POST https://api.hella.link/authorize \
+  -H "Content-Type: application/json" \
+  -d '{"code": "H99xV2yT"}'
+```
+
+Das Token wird erst dauerhaft, wenn damit innerhalb von 15 Minuten mindestens ein Aufruf erfolgt -
+also einmal `/controls` öffnen.
+
+**Umgebungsvariablen:** Entweder gebündelt in `ONYX` oder einzeln. Einzelne Variablen haben Vorrang.
+
+| Variable | Bedeutung |
+| --- | --- |
+| `ONYX` | Antwort von `/authorize` als JSON, `fingerabdruck:token` oder nur das Token |
+| `ONYX_TOKEN` | API-Token der Anlage |
+| `ONYX_FINGERPRINT` | Fingerabdruck der ONYX.CENTER, für den Weg über `api.hella.link` |
+| `ONYX_HOST` | mDNS-Hostname der ONYX.CENTER für lokalen Zugriff, z.B. `ONYX-CENTER-C0-00-01-5e.local` |
+| `ONYX_API_VERSION` | Standard `v5`, ältere Anlagen brauchen `v3` oder `v1` |
+
+Ein Token allein reicht nicht - dazu muss entweder der Fingerabdruck oder der Hostname bekannt sein.
+Der lokale Weg hat Vorrang, funktioniert aber nur im selben Netz und dessen TLS-Zertifikat lässt
+sich nicht regulär prüfen; auf Vercel ist deshalb `api.hella.link` der richtige Weg.
+
+**Was die Steuerung kann:** Auf/Stopp/Zu und Position je Beschattung, bei Raffstores zusätzlich der
+Lamellenwinkel, Lampen an/aus und Helligkeit bei dimmbaren. Sammelbefehle gelten für alle gefundenen
+Geräte. Welche Geräte auftauchen, entscheiden ihre Eigenschaften und nicht ihr Typ: alles mit
+`target_position` gilt als Beschattung, alles mit `target_brightness` als Licht - Sensoren, Taster
+und Wetterstation fallen von selbst heraus.
+
+**Haltedauer:** Befehle über die API haben die Priorität "interactive" und übersteuern Zeit- und
+Sonnenautomatik, bis sie ablaufen - standardmäßig nach 15 Minuten. Über die Auswahl im Cockpit
+lässt sich das bis 24 Stunden strecken (die Route rechnet daraus `best_before` und begrenzt auf
+sieben Tage). Was abläuft, ist nur die Sperre gegen die Automatik; die eingestellte Position bleibt
+stehen. "Automatik übernehmen lassen" an jeder Kachel nimmt den Befehl vorzeitig zurück. Wind-,
+Regen- und Hagelschutz haben in jedem Fall Vorrang.
+
+> **Achtung:** Über `/api/onyx` fahren echte Jalousien. Die Routen unter `/api` liegen deshalb
+> seit dieser Erweiterung mit hinter dem Passwortschutz aus [src/proxy.ts](src/proxy.ts) - der
+> greift aber nur, wenn `BASE_AUTH_USER` und `BASE_AUTH_PASS` gesetzt sind. Ohne diese Variablen
+> ist alles offen, auch die Steuerbefehle. In der Produktion gehören sie gesetzt.
+
+### Passwortschutz
+
+[src/proxy.ts](src/proxy.ts) legt HTTP Basic Auth vor die gesamte Anwendung, sobald
+`BASE_AUTH_USER` und `BASE_AUTH_PASS` gesetzt sind - Seiten wie Routen unter `/api`. Fehlt eines
+der beiden, bleibt der Schutz aus; anders wäre lokale Entwicklung mühsam. Die Aufrufe aus der
+Oberfläche brauchen nichts weiter: der Browser hängt die einmal eingegebenen Zugangsdaten von
+selbst an jede Anfrage an dieselbe Herkunft an.
+
+Die Namen lauten `BASE_AUTH_*` statt des fachlich richtigen `BASIC_AUTH_*`, weil sie auf Vercel so
+angelegt wurden und sich dort nicht mehr umbenennen lassen.
+
+Der Passwortschutz allein genügt für Schreibrouten nicht: Basic Auth hängt der Browser von sich aus
+auch an Anfragen an, die eine fremde Seite im Hintergrund abschickt (CSRF). `POST` und `DELETE` auf
+`/api/controls` und `/api/onyx` prüfen deshalb zusätzlich `Sec-Fetch-Site` und `Origin` und
+verlangen `Content-Type: application/json` - siehe [src/lib/requestGuard.ts](src/lib/requestGuard.ts).
+
+> **Beim lokalen Entwickeln:** `next dev` horcht auf allen Netzwerkschnittstellen, und ohne gesetzte
+> `BASE_AUTH_*` ist die Steuerung damit für jeden im selben Netz offen - samt Jalousien. Wer das
+> nicht will, setzt die Variablen auch lokal oder startet mit `next dev -H 127.0.0.1`.
+
 ## 🎨 Features im Detail
 
 ### Slideshow-Modus

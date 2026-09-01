@@ -5,6 +5,7 @@ import {
   writeControlState,
   type ControlState,
 } from '@/lib/controlState';
+import { rejectCrossSite, requireJsonContentType } from '@/lib/requestGuard';
 
 // Befehle dürfen nie aus einem Zwischenspeicher kommen.
 export const dynamic = 'force-dynamic';
@@ -24,6 +25,10 @@ export async function GET(): Promise<NextResponse> {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  // Auch die Anzeigesteuerung ist ein Schreibweg - siehe src/lib/requestGuard.ts.
+  const blocked = rejectCrossSite(request) ?? requireJsonContentType(request);
+  if (blocked) return blocked;
+
   try {
     const patch = (await request.json()) as Partial<ControlState>;
     const state = await writeControlState(patch);

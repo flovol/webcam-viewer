@@ -52,9 +52,24 @@ export default function middleware(req: NextRequest) {
     }
   }
 
+  // Die Routen unter /api brauchen denselben Schutz wie die Seiten - über
+  // /api/onyx fahren sonst Fremde die Jalousien. Der Browser hängt die
+  // Zugangsdaten nach der ersten Abfrage von selbst an jede weitere Anfrage an
+  // dieselbe Herkunft an, die Aufrufe aus der Oberfläche funktionieren also
+  // unverändert.
+  //
+  // Die Sprachweiche darf hier aber nicht laufen: sie würde /api/... auf
+  // /de/api/... umleiten und die Routen damit ins Leere laufen lassen.
+  if (req.nextUrl.pathname.startsWith('/api/')) {
+    return NextResponse.next();
+  }
+
   return intlMiddleware(req);
 }
 
 export const config = {
-  matcher: ['/', '/(de|en)/:path*', '/((?!api|_next|_vercel|.*\..*).*)']
+  // Der letzte Eintrag klammert Pfade mit Punkt aus (Dateien wie /favicon.ico),
+  // deshalb steht /api hier eigens - sonst bliebe etwa /api/terrain/12/8/5.png
+  // ungeschützt.
+  matcher: ['/', '/(de|en)/:path*', '/api/:path*', '/((?!_next|_vercel|.*\..*).*)']
 };
