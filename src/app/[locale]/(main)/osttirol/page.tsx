@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Snowfall from "react-snowfall";
 import ClockDisplay from "@/components/ClockDisplay";
@@ -9,48 +10,56 @@ import RadioPlayer from "@/components/RadioPlayer";
 import SettingsMenu from "@/components/SettingsMenu";
 import WebcamSlideshow from "@/components/WebcamSlideshow";
 import WebcamGrid from "@/components/WebcamGrid";
+import WebcamFlightCard from "@/components/WebcamFlightCard";
+import { buildFlightRoute, distanceKm } from "@/lib/geo";
+
+// MapLibre greift auf window zu und darf deshalb nicht serverseitig gerendert werden.
+const WebcamFlightMap = dynamic(() => import("@/components/WebcamFlightMap"), {
+  ssr: false,
+  loading: () => <div className="absolute inset-0 bg-[#b9cfe4]" />,
+});
 
 const cameraLocations: Record<string, { name: string; lat: number; lon: number }> = {
-  "stveit": { name: "St. Veit in Defereggen", lat: 46.9167, lon: 12.3500 },
-  "stjakob": { name: "St. Jakob im Defereggental", lat: 46.9333, lon: 12.3667 },
-  "hopfgarten": { name: "Hopfgarten im Defereggental", lat: 46.9500, lon: 12.4000 },
-  "brunnalm-6EUB": { name: "Skizentrum St. Jakob - Mooseralm", lat: 46.9400, lon: 12.3700 },
-  "weissspitz": { name: "Skizentrum St. Jakob - Weißspitz", lat: 46.9450, lon: 12.3650 },
-  "mooseralm": { name: "Skizentrum St. Jakob - Mooseralm", lat: 46.9380, lon: 12.3720 },
-  "lienz": { name: "Lienz / Zettersfeld", lat: 46.8289, lon: 12.7692 },
-  "virgen-nord": { name: "Virgen / Würfelehütte", lat: 47.0000, lon: 12.4667 },
-  "dolomitenhuette": { name: "Dolomitenhütte", lat: 46.8833, lon: 12.3833 },
-  "steigerhof": { name: "Matrei in Osttirol / Steigerhof", lat: 47.0000, lon: 12.5333 },
-  "bethuberhof": { name: "Matrei in Osttirol / Bethuberhof", lat: 47.0050, lon: 12.5300 },
-  "glocknerwinkel": { name: "Glocknerwinkel", lat: 47.0667, lon: 12.7000 },
-  "kalsertal": { name: "Kalsertal", lat: 47.0333, lon: 12.6833 },
-  "lucknerhaus": { name: "Lucknerhaus", lat: 47.0500, lon: 12.7167 },
-  "virgen-west": { name: "Virgen / Sonnberg", lat: 47.0100, lon: 12.4600 },
-  "strumerhof": { name: "Matrei in Osttirol / Strumerhof", lat: 47.0080, lon: 12.5280 },
-  "kals-nord": { name: "Kals am Großglockner", lat: 47.0167, lon: 12.6833 },
-  "kreuzspitze": { name: "Kreuzspitze / Villgratental", lat: 46.9000, lon: 12.4500 },
-  "kals": { name: "Kals am Großglockner", lat: 47.0167, lon: 12.6833 },
-  "faschingalm": { name: "Lienz / Zettersfeld", lat: 46.8300, lon: 12.7700 },
-  "eispark-osttirol": { name: "Eispark Osttirol", lat: 46.8300, lon: 12.7650 },
-  "kartitsch": { name: "Kartitsch", lat: 46.7167, lon: 12.5167 },
-  "kartitsch-monte": { name: "Kartitsch Monte", lat: 46.7200, lon: 12.5200 },
-  "villgraten": { name: "Villgraten Kalkstein / Alfenalm", lat: 46.8833, lon: 12.4500 },
-  "innervillgraten": { name: "Innervillgraten", lat: 46.9000, lon: 12.4833 },
-  "ausservillgraten": { name: "Außervillgraten", lat: 46.8833, lon: 12.4333 },
-  "sillian": { name: "Sillian", lat: 46.7500, lon: 12.4167 },
-  "amlach": { name: "Amlach", lat: 46.8167, lon: 12.7833 },
-  "obertilliach-Panorama": { name: "Obertilliach Panorama", lat: 46.7167, lon: 12.6167 },
-  "obertilliach-Biathlonzentrum": { name: "Obertilliach Biathlonzentrum", lat: 46.7150, lon: 12.6150 },
-  "obertilliach-Golzentipp": { name: "Obertilliach Golzentipp", lat: 46.7180, lon: 12.6180 },
-  "kals-Talstation": { name: "Großglockner Resort / Kals Talstation", lat: 47.0200, lon: 12.6800 },
-  "kals-Gradonna": { name: "Großglockner Resort / Kals Gradonna", lat: 47.0220, lon: 12.6820 },
-  "matrei-AdlerLounge": { name: "Großglockner Resort / Matrei - AdlerLounge", lat: 47.0100, lon: 12.5400 },
-  "matrei-Bergstation": { name: "Großglockner Resort / Matrei - Bergstation", lat: 47.0120, lon: 12.5420 },
-  "bergstation-Gadein": { name: "Skizentrum Sillian Hochpustertal / Gadein", lat: 46.7550, lon: 12.4200 },
-  "bergstation-Ausservillgraten": { name: "Skizentrum Sillian Hochpustertal/ Außervillgraten", lat: 46.8850, lon: 12.4350 },
-  "6er-Sesselbahn": { name: "Skizentrum Sillian Hochpustertal / 6er Sesselbahn Berg", lat: 46.7570, lon: 12.4220 },
-  "adlersruhe": { name: "Adlersruhe / Blick zum Großglockner", lat: 47.0833, lon: 12.7167 },
-  "freiwandeck": { name: "Freiwandeck / Blick zum Großglockner", lat: 47.0700, lon: 12.7000 }
+  "stveit": { name: "St. Veit in Defereggen", lat: 46.92766, lon: 12.43572 },
+  "stjakob": { name: "St. Jakob im Defereggental", lat: 46.91721, lon: 12.32264 },
+  "hopfgarten": { name: "Hopfgarten im Defereggental", lat: 46.90979, lon: 12.47925 },
+  "brunnalm-6EUB": { name: "Skizentrum St. Jakob - Mooseralm", lat: 46.89986, lon: 12.35646 },
+  "weissspitz": { name: "Skizentrum St. Jakob - Weißspitz", lat: 46.89363, lon: 12.35148 },
+  "mooseralm": { name: "Skizentrum St. Jakob - Mooseralm", lat: 46.89278, lon: 12.36699 },
+  "lienz": { name: "Lienz / Zettersfeld", lat: 46.86034, lon: 12.80398 },
+  "virgen-nord": { name: "Virgen / Würfelehütte", lat: 46.99059, lon: 12.44769 },
+  "dolomitenhuette": { name: "Dolomitenhütte", lat: 46.78967, lon: 12.78353 },
+  "steigerhof": { name: "Matrei in Osttirol / Steigerhof", lat: 46.99461, lon: 12.54786 },
+  "bethuberhof": { name: "Matrei in Osttirol / Bethuberhof", lat: 46.98612, lon: 12.53049 },
+  "glocknerwinkel": { name: "Glocknerwinkel", lat: 47.02183, lon: 12.68961 },
+  "kalsertal": { name: "Kalsertal", lat: 46.91322, lon: 12.58326 },
+  "lucknerhaus": { name: "Lucknerhaus", lat: 47.02099, lon: 12.68796 },
+  "virgen-west": { name: "Virgen / Sonnberg", lat: 47.00832, lon: 12.47077 },
+  "strumerhof": { name: "Matrei in Osttirol / Strumerhof", lat: 47.01029, lon: 12.51806 },
+  "kals-nord": { name: "Kals am Großglockner", lat: 46.98332, lon: 12.62694 },
+  "kreuzspitze": { name: "Kreuzspitze / Villgratental", lat: 46.82795, lon: 12.31206 },
+  "kals": { name: "Kals am Großglockner", lat: 47.00748, lon: 12.64754 },
+  "faschingalm": { name: "Lienz / Zettersfeld", lat: 46.86035, lon: 12.80399 },
+  "eispark-osttirol": { name: "Eispark Osttirol", lat: 47.12665, lon: 12.47852 },
+  "kartitsch": { name: "Kartitsch", lat: 46.72536, lon: 12.49747 },
+  "kartitsch-monte": { name: "Kartitsch Monte", lat: 46.72536, lon: 12.49747 },
+  "villgraten": { name: "Villgraten Kalkstein / Alfenalm", lat: 46.80501, lon: 12.31888 },
+  "innervillgraten": { name: "Innervillgraten", lat: 46.80784, lon: 12.37209 },
+  "ausservillgraten": { name: "Außervillgraten", lat: 46.78649, lon: 12.42906 },
+  "sillian": { name: "Sillian", lat: 46.74729, lon: 12.41803 },
+  "amlach": { name: "Amlach", lat: 46.81349, lon: 12.76182 },
+  "obertilliach-Panorama": { name: "Obertilliach Panorama", lat: 46.71003, lon: 12.61473 },
+  "obertilliach-Biathlonzentrum": { name: "Obertilliach Biathlonzentrum", lat: 46.70956, lon: 12.59201 },
+  "obertilliach-Golzentipp": { name: "Obertilliach Golzentipp", lat: 46.72385, lon: 12.62345 },
+  "kals-Talstation": { name: "Großglockner Resort / Kals Talstation", lat: 47.00591, lon: 12.64048 },
+  "kals-Gradonna": { name: "Großglockner Resort / Kals Gradonna", lat: 47.01476, lon: 12.63662 },
+  "matrei-AdlerLounge": { name: "Großglockner Resort / Matrei - AdlerLounge", lat: 46.99292, lon: 12.59632 },
+  "matrei-Bergstation": { name: "Großglockner Resort / Matrei - Bergstation", lat: 46.99633, lon: 12.56597 },
+  "bergstation-Gadein": { name: "Skizentrum Sillian Hochpustertal / Gadein", lat: 46.77179, lon: 12.38875 },
+  "bergstation-Ausservillgraten": { name: "Skizentrum Sillian Hochpustertal/ Außervillgraten", lat: 46.77647, lon: 12.39838 },
+  "6er-Sesselbahn": { name: "Skizentrum Sillian Hochpustertal / 6er Sesselbahn Berg", lat: 46.77452, lon: 12.38310 },
+  "adlersruhe": { name: "Adlersruhe / Blick zum Großglockner", lat: 47.06996, lon: 12.70158 },
+  "freiwandeck": { name: "Freiwandeck / Blick zum Großglockner", lat: 47.07820, lon: 12.75640 }
 };
 
 const WEBCAM_URLS = [
@@ -98,6 +107,25 @@ const WEBCAM_URLS = [
 
 const SLIDE_DURATION = 5000; // 5 Sekunden pro Bild
 
+// Flug-Modus: jeder Webcam-Standort wird zu einer Station auf der 3D-Karte.
+const FLIGHT_STOPS = WEBCAM_URLS.map((camera) => {
+  const location = cameraLocations[camera.locationId];
+
+  return {
+    id: camera.locationId,
+    name: location?.name || 'Osttirol',
+    lat: location?.lat ?? 46.8289,
+    lon: location?.lon ?? 12.7692,
+  };
+});
+
+// Reihenfolge mit kurzen Etappen - Indizes zeigen in WEBCAM_URLS / FLIGHT_STOPS.
+const FLIGHT_ROUTE = buildFlightRoute(FLIGHT_STOPS);
+
+// Flugdauer skaliert mit der Distanz, damit kurze Sprünge nicht zäh wirken.
+const MIN_FLIGHT_MS = 1800;
+const MAX_FLIGHT_MS = 6000;
+
 const RADIO_STATIONS = [
   { id: 'oe3', name: 'Hitradio Ö3', url: 'https://orf-live.ors-shoutcast.at/oe3-q2a' },
   { id: 'fm4', name: 'FM4', url: 'https://orf-live.ors-shoutcast.at/fm4-q2a' },
@@ -129,7 +157,10 @@ export default function OsttirolPage() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [selectedStation, setSelectedStation] = useState(RADIO_STATIONS[0]);
   const [slideDuration, setSlideDuration] = useState(5000); // 5 Sekunden Standard
-  const [viewMode, setViewMode] = useState('slideshow'); // 'slideshow' oder 'grid'
+  const [viewMode, setViewMode] = useState('slideshow'); // 'slideshow', 'grid' oder 'flight'
+  // Position in FLIGHT_ROUTE; previousStep = -1 heißt "noch kein Flug geflogen".
+  const [flight, setFlight] = useState({ step: 0, previousStep: -1 });
+  const [flightPhase, setFlightPhase] = useState<'flying' | 'arrived'>('arrived');
   const [gridCameras, setGridCameras] = useState(() => {
     // Wähle zufällig 4 Kameras für den Grid-Modus
     const shuffled = [...WEBCAM_URLS].sort(() => Math.random() - 0.5);
@@ -183,6 +214,49 @@ export default function OsttirolPage() {
 
     return () => clearInterval(interval);
   }, [viewMode, slideDuration, gridCameras]);
+
+  const flightTarget = FLIGHT_STOPS[FLIGHT_ROUTE[flight.step]];
+  const flightOrigin =
+    flight.previousStep >= 0 ? FLIGHT_STOPS[FLIGHT_ROUTE[flight.previousStep]] : null;
+
+  const flightDuration = useMemo(() => {
+    if (!flightOrigin) return 0;
+
+    const spanned = distanceKm(flightOrigin, flightTarget);
+    return Math.min(MAX_FLIGHT_MS, Math.max(MIN_FLIGHT_MS, 1400 + spanned * 130));
+  }, [flightOrigin, flightTarget]);
+
+  // Flug-Modus: Losfliegen. Wann die Kamera ankommt, meldet die Karte selbst -
+  // ein großer Kurswechsel dehnt den Flug über flightDuration hinaus.
+  useEffect(() => {
+    if (viewMode !== 'flight') return;
+
+    setFlightPhase('flying');
+  }, [viewMode, flight]);
+
+  const handleFlightEnd = useCallback(() => setFlightPhase('arrived'), []);
+
+  // Nach der Landung stehenbleiben, dann zur nächsten Station.
+  useEffect(() => {
+    if (viewMode !== 'flight' || flightPhase !== 'arrived') return;
+
+    const departure = setTimeout(
+      () => setFlight((current) => ({
+        step: (current.step + 1) % FLIGHT_ROUTE.length,
+        previousStep: current.step,
+      })),
+      slideDuration
+    );
+
+    return () => clearTimeout(departure);
+  }, [viewMode, flightPhase, slideDuration]);
+
+  // Wetter und Standortname hängen an currentIndex - im Flug mitziehen.
+  useEffect(() => {
+    if (viewMode !== 'flight') return;
+
+    setCurrentIndex(FLIGHT_ROUTE[flight.step]);
+  }, [viewMode, flight.step]);
 
   // Uhr aktualisieren
   useEffect(() => {
@@ -325,13 +399,27 @@ export default function OsttirolPage() {
       const shuffled = [...WEBCAM_URLS].sort(() => Math.random() - 0.5);
       setGridCameras(shuffled.slice(0, 4));
     }
+
+    // Flug startet an einer zufälligen Station, damit nicht jede Sitzung gleich aussieht.
+    if (newMode === 'flight') {
+      setFlight({ step: Math.floor(Math.random() * FLIGHT_ROUTE.length), previousStep: -1 });
+      setFlightPhase('arrived');
+    }
   };
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col overflow-hidden">
       {/* Blurry Hintergrund über gesamte Seite */}
       <div className="absolute inset-0 z-0 overflow-hidden">
-        {viewMode === 'slideshow' ? (
+        {viewMode === 'flight' ? (
+          <WebcamFlightMap
+            stops={FLIGHT_STOPS}
+            target={flightTarget}
+            origin={flightOrigin}
+            flightDuration={flightDuration}
+            onFlightEnd={handleFlightEnd}
+          />
+        ) : viewMode === 'slideshow' ? (
           <>
             {/* Vorheriges Bild */}
             <Image
@@ -378,7 +466,7 @@ export default function OsttirolPage() {
             />
           </>
         )}
-        <div className="absolute inset-0 bg-black/20" />
+        {viewMode !== 'flight' && <div className="absolute inset-0 bg-black/20" />}
         {/* Schneefall im Hintergrund - nur nach 19:00 Uhr */}
         {(currentTime.getHours() >= 17 || currentTime.getHours() < 6) && (
           <Snowfall
@@ -415,7 +503,13 @@ export default function OsttirolPage() {
 
       {/* Webcam Ansicht - Slideshow oder Grid */}
       <div className="flex-1 relative overflow-hidden">
-        {viewMode === 'slideshow' ? (
+        {viewMode === 'flight' ? (
+          <WebcamFlightCard
+            url={WEBCAM_URLS[currentIndex].url}
+            locationName={cameraLocations[WEBCAM_URLS[currentIndex].locationId]?.name || 'Osttirol'}
+            visible={flightPhase === 'arrived'}
+          />
+        ) : viewMode === 'slideshow' ? (
           <WebcamSlideshow
             currentUrl={WEBCAM_URLS[currentIndex].url}
             previousUrl={WEBCAM_URLS[previousIndex].url}
@@ -453,8 +547,8 @@ export default function OsttirolPage() {
               {/* Trennlinie nach Settings */}
               <div className="h-10 md:h-12 w-px bg-white/20 flex-shrink-0"></div>
 
-              {/* Wetter - nur im Slideshow-Modus */}
-              {viewMode === 'slideshow' && (
+              {/* Wetter - im Slideshow- und Flug-Modus */}
+              {viewMode !== 'grid' && (
                 <>
                   <div className="flex-1 md:w-[280px] md:flex-none">
                     <WeatherDisplay

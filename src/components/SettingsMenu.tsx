@@ -28,6 +28,7 @@ export default function SettingsMenu({ slideDuration, viewMode, onSlideDurationC
                   className="bg-white/10 text-white text-xs md:text-sm rounded-lg px-2.5 md:px-3 py-1.5 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 cursor-pointer [&>option]:bg-gray-900 [&>option]:text-white"
                 >
                   <option value="slideshow">Diashow</option>
+                  <option value="flight">3D-Flug</option>
                   {/*<option value="grid">4 Kacheln</option>*/}
                 </select>
               </div>
