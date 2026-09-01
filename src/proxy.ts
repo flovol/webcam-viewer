@@ -34,8 +34,11 @@ function unauthorized(): NextResponse {
 }
 
 export default function middleware(req: NextRequest) {
-  const user = process.env.BASIC_AUTH_USER;
-  const password = process.env.BASIC_AUTH_PASS;
+  // Namen wie in den Vercel-Umgebungsvariablen hinterlegt. Fachlich wäre
+  // BASIC_AUTH_* richtig (HTTP Basic Auth), die Variablen lassen sich dort aber
+  // nicht mehr umbenennen - der Code richtet sich deshalb danach.
+  const user = process.env.BASE_AUTH_USER;
+  const password = process.env.BASE_AUTH_PASS;
 
   // Ohne gesetzte Zugangsdaten bleibt der Schutz aus - sonst wäre lokale
   // Entwicklung nicht möglich. ACHTUNG: fehlen die Variablen in der Produktion,
