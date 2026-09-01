@@ -16,7 +16,9 @@ export default function MainLayout({
 
   return (
     <div className="flex h-screen">
-      <main className="flex-1 overflow-auto">
+      {/* min-w-0: ohne das schrumpft ein Flex-Item nicht unter seine
+          Inhaltsbreite und schmale Seiten laufen seitlich über. */}
+      <main className="flex-1 min-w-0 overflow-auto">
         {children}
       </main>
     </div>
