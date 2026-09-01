@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Alarm } from "@/app/api/alarms/route";
 import AlarmPopup from "./AlarmPopup";
-import { ALARM_SOUND_DURATION_MS, playAlarmSound } from "@/lib/alarmSound";
+import { ALARM_SOUND_DURATION_MS, ensureAlarmSound, playAlarmSound } from "@/lib/alarmSound";
 import { speak } from "@/lib/speech";
 import { ALARM_DEMO_EVENT } from "@/lib/alarmDemo";
 
@@ -142,20 +142,29 @@ export default function AlarmWatcher({ nightMode }: AlarmWatcherProps) {
     nightRef.current = nightMode;
   });
 
+  // Tonausgabe so frueh wie moeglich freischalten. Gelingt das nicht (der
+  // Browser verlangt Interaktion), wird es beim ersten Klick nachgeholt - der
+  // Schalter in den Einstellungen ist dafuer nicht mehr noetig.
+  useEffect(() => {
+    ensureAlarmSound();
+  }, []);
+
   const dismissPopup = useCallback((key: string) => {
     setPopups((current) => current.filter((entry) => entry.key !== key));
   }, []);
 
-  // Probe-Popup: zeigt einmal, wie eine Alarmierung aussieht und klingt.
+  // Testalarm: zeigt einmal, wie eine Alarmierung aussieht und klingt.
+  // Bewusst nicht als echter Einsatz getarnt - an einer Bueromwand soll niemand
+  // glauben, in Matrei brenne es.
   const showDemo = useCallback(() => {
     if (nightRef.current) return;
 
     const alarm: Alarm = {
-      type: "Brand im Freien",
-      location: "9971 Matrei in Osttirol",
-      postalCode: "9971",
-      place: "Matrei in Osttirol",
-      brigade: "FW Matrei/Osttirol",
+      type: "Test Alarm",
+      location: "Testmeldung",
+      postalCode: null,
+      place: "Testmeldung",
+      brigade: "Kein echter Einsatz",
       date: new Date().toLocaleDateString("de-AT"),
     };
 

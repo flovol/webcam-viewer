@@ -7,6 +7,8 @@
  * heraus aufgerufen werden, sonst bleibt der Kontext stumm.
  */
 
+import { isMuted } from "./soundPreference";
+
 type AudioContextConstructor = typeof AudioContext;
 
 let context: AudioContext | null = null;
@@ -35,6 +37,34 @@ export function unlockAlarmSound(): boolean {
   }
 }
 
+/**
+ * Versucht die Tonausgabe ohne Zutun freizuschalten, sobald die Seite lädt.
+ *
+ * Ob das gelingt, entscheidet der Browser: Ohne vorherige Interaktion bleibt
+ * ein frisch erzeugter Audiokontext normalerweise "suspended". Zwei Fälle, in
+ * denen es trotzdem sofort klappt:
+ *
+ * - Der Anzeigerechner startet Chrome mit --autoplay-policy=no-user-gesture-required
+ *   (der übliche Weg im Kioskbetrieb, siehe README).
+ * - Der Browser hat der Seite die Tonwiedergabe dauerhaft erlaubt.
+ *
+ * Klappt es nicht, wird beim allerersten Klick, Tastendruck oder Tippen
+ * nachgeholt - egal wo auf der Seite. Niemand muss dafür ein Menü suchen.
+ */
+export function ensureAlarmSound(): void {
+  if (!unlockAlarmSound()) return;
+
+  if (isAlarmSoundReady()) return;
+
+  const nachholen = () => {
+    void context?.resume();
+  };
+
+  for (const ereignis of ["pointerdown", "keydown", "touchstart"]) {
+    window.addEventListener(ereignis, nachholen, { once: true, capture: true });
+  }
+}
+
 export function isAlarmSoundReady(): boolean {
   return context !== null && context.state === "running";
 }
@@ -52,6 +82,7 @@ export const ALARM_SOUND_DURATION_MS = Math.round(TONE_LENGTH * PATTERN.length *
 
 /** Vier abwechselnde Töne, angelehnt an ein Signalhorn. */
 export function playAlarmSound(volume = 0.25): void {
+  if (isMuted()) return;
   if (!context || context.state !== "running") return;
 
   const pattern = PATTERN;

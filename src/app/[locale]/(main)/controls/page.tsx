@@ -225,7 +225,7 @@ export default function ControlsPage() {
                 onClick={() => send({ alarmDemoNonce: state.alarmDemoNonce + 1 })}
                 className={`${BUTTON} w-full border border-blue-400/40 bg-blue-600/25 text-white hover:bg-blue-600/40`}
               >
-                Blaulicht-Popup auslösen
+                Test Alarm
               </button>
             </div>
           </Panel>

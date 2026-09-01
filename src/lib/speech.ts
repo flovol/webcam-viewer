@@ -1,3 +1,5 @@
+import { isMuted } from "./soundPreference";
+
 /**
  * Vorlesen über die im Browser eingebauten Stimmen.
  *
@@ -149,6 +151,8 @@ async function playFile(source: string): Promise<boolean> {
  * Reihenfolge und nicht umgekehrt.
  */
 export function say(text: string, audio?: string | null): void {
+  if (isMuted()) return;
+
   if (!audio) {
     speak(text);
     return;
@@ -171,7 +175,7 @@ export function isSpeechAvailable(): boolean {
  * Browser stumm. Auf der Anzeige genügt ein Klick, siehe alarmSound.ts.
  */
 export function speak(text: string): void {
-  if (!isSpeechAvailable() || !text.trim()) return;
+  if (isMuted() || !isSpeechAvailable() || !text.trim()) return;
 
   const synth = window.speechSynthesis;
 

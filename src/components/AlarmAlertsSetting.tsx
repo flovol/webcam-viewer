@@ -1,63 +1,73 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { isAlarmSoundReady, unlockAlarmSound } from "@/lib/alarmSound";
-import { triggerAlarmDemo } from "@/lib/alarmDemo";
+import { useCallback, useEffect, useState } from "react";
+import { isAlarmSoundReady, playAlarmSound, unlockAlarmSound } from "@/lib/alarmSound";
+import { isMuted, setMuted, subscribeMuted } from "@/lib/soundPreference";
 
 /**
- * Schaltet Ton und Systemmeldungen für Feuerwehr-Alarmierungen frei.
+ * Ausschalter für alles Hörbare: Signalhorn, Alarmansage, Nachrichten.
  *
- * Browser geben beides nur nach echter Nutzerinteraktion frei - deshalb braucht
- * es diesen Klick, sonst bliebe der Alarm stumm. Das Popup selbst erscheint auch
- * ohne Freischaltung.
+ * Standard ist AN - wer nichts tut, bekommt Ton. Früher war es umgekehrt und
+ * man musste erst hier klicken; die Freischaltung passiert jetzt beim Laden
+ * der Anzeige, spätestens beim ersten Klick irgendwo auf der Seite.
+ *
+ * Bleibt der Browser trotzdem stumm (er verlangt Interaktion und es hat noch
+ * keine gegeben), sagt der Schalter das und der Klick darauf holt es nach.
  */
 export default function AlarmAlertsSetting() {
-  const [ready, setReady] = useState(false);
-  const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default");
+  const [muted, setMutedState] = useState(false);
+  const [blocked, setBlocked] = useState(false);
 
   useEffect(() => {
     const refresh = () => {
-      setReady(isAlarmSoundReady());
-      setPermission(
-        typeof Notification === "undefined" ? "unsupported" : Notification.permission
-      );
+      setMutedState(isMuted());
+      setBlocked(!isAlarmSoundReady());
     };
 
     refresh();
     const interval = setInterval(refresh, 2000);
+    const unsubscribe = subscribeMuted(refresh);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
   }, []);
 
-  const enable = async () => {
-    setReady(unlockAlarmSound());
-    // Probe-Popup samt Ton, damit gleich sichtbar ist, wie ein Alarm aussieht.
-    triggerAlarmDemo();
+  const toggle = useCallback(() => {
+    const next = !isMuted();
+    setMuted(next);
+    setMutedState(next);
 
-    if (typeof Notification !== "undefined") {
-      setPermission(await Notification.requestPermission());
-    }
-  };
+    if (next) return;
 
-  const active = ready && permission === "granted";
+    // Einschalten ist zugleich die Nutzerinteraktion, auf die der Browser
+    // wartet - und ein kurzer Ton zeigt, dass es wirklich klappt.
+    setBlocked(!unlockAlarmSound());
+    window.setTimeout(() => {
+      setBlocked(!isAlarmSoundReady());
+      playAlarmSound(0.15);
+    }, 120);
+  }, []);
+
+  const label = muted ? "aus" : blocked ? "wartet auf Klick" : "an";
 
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="text-white/90 text-xs md:text-sm">Einsatz-Alarm</span>
+      <span className="text-white/90 text-xs md:text-sm">Ton</span>
 
-      {active ? (
-        <span className="flex items-center gap-1.5 text-xs md:text-sm text-green-400">
-          <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
-          aktiv
-        </span>
-      ) : (
-        <button
-          onClick={enable}
-          className="rounded-lg border border-white/20 bg-white/10 px-2.5 md:px-3 py-1.5 text-xs md:text-sm text-white transition-colors hover:bg-white/20"
-        >
-          {permission === "denied" ? "Ton aktivieren" : "Aktivieren"}
-        </button>
-      )}
+      <button
+        onClick={toggle}
+        className="flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/10 px-2.5 md:px-3 py-1.5 text-xs md:text-sm text-white transition-colors hover:bg-white/20"
+        aria-pressed={!muted}
+      >
+        <span
+          className={`h-1.5 w-1.5 rounded-full ${
+            muted ? "bg-white/30" : blocked ? "bg-amber-400" : "bg-green-400"
+          }`}
+        />
+        {label}
+      </button>
     </div>
   );
 }
