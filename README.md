@@ -14,7 +14,7 @@ Ein modernes Next.js Dashboard für Live-Webcams aus Osttirol mit integrierten W
 - 📱 **Responsive** - Optimiert für alle Bildschirmgrößen
 - ⚡ **Next.js 16** - App Router, Server Components
 - 🎨 **Tailwind CSS** - Modern und performant
-- 🔤 **HK Grotesk Font** - Professionelle Typografie
+
 
 ## 🗺️ Webcam-Standorte
 
